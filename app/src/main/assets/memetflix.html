@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Memetflix</title>
+  <script src="hls.min.js"></script>
+  <style>
+    :root {
+      --bg: #070709;
+      --bg-elevated: #121318;
+      --bg-card: #181a20;
+      --red: #E50914;
+      --red-hover: #f6121d;
+      --text: #ffffff;
+      --text-muted: #a3a7b5;
+      --border: rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(229, 9, 20, 0.5);
+      border-radius: 4px;
+    }
+
+    /* Foco visible para Control Remoto de TV (D-Pad) */
+    .focusable:focus,
+    button:focus,
+    input:focus,
+    select:focus,
+    [tabindex]:focus {
+      outline: 3px solid var(--red) !important;
+      outline-offset: 2px !important;
+      box-shadow: 0 0 18px rgba(229, 9, 20, 0.85) !important;
+      transform: scale(1.03);
+      z-index: 10;
+    }
+
+    /* Barra de navegación superior */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(7,7,9,0.82) 100%);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--red);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 14px rgba(229, 9, 20, 0.6);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 2px 0;
+    }
+
+    .nav-btn {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .nav-btn:hover,
+    .nav-btn.active {
+      color: #fff;
+      background: rgba(229, 9, 20, 0.18);
+      border-color: rgba(229, 9, 20, 0.55);
+    }
+
+    .nav-btn.active {
+      background: var(--red);
+      border-color: var(--red);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+    }
+
+    .search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-input {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 14px;
+      width: 190px;
+      transition: width 0.25s ease, border-color 0.2s;
+    }
+
+    .search-input:focus {
+      width: 240px;
+      border-color: var(--red);
+      background: rgba(0, 0, 0, 0.85);
+    }
+
+    .user-btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* Contenedor Principal */
+    .main-content {
+      padding-top: 72px;
+      padding-bottom: 48px;
+    }
+
+    /* Hero Banner */
+    .hero {
+      position: relative;
+      width: 100%;
+      min-height: 440px;
+      display: flex;
+      align-items: flex-end;
+      padding: 40px 28px 36px;
+      background-size: cover;
+      background-position: center top;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(7,7,9,0.96) 0%, rgba(7,7,9,0.72) 55%, rgba(7,7,9,0.25) 100%),
+                  linear-gradient(180deg, rgba(7,7,9,0.3) 0%, rgba(7,7,9,0) 40%, var(--bg) 100%);
+    }
+
+    .hero-info {
+      position: relative;
+      z-index: 2;
+      max-width: 640px;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: var(--red);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+
+    .hero-title {
+      font-size: clamp(26px, 4vw, 46px);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 10px;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.9);
+    }
+
+    .hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: #d1d5db;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .hero-rating {
+      color: #fbbf24;
+      font-weight: 800;
+    }
+
+    .hero-overview {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #cbd5e1;
+      margin-bottom: 20px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      background: var(--red);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .btn-primary:hover {
+      background: var(--red-hover);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 12px 22px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Filas y Cuadrículas de Contenido */
+    .section {
+      padding: 20px 24px 8px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: var(--red);
+      border-radius: 2px;
+    }
+
+    .row-scroll {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      padding: 8px 4px 16px;
+      scroll-behavior: smooth;
+    }
+
+    .grid-catalog {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+      gap: 16px;
+      padding: 8px 0 24px;
+    }
+
+    @media (min-width: 1024px) {
+      .grid-catalog {
+        grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+        gap: 20px;
+      }
+    }
+
+    .card {
+      position: relative;
+      width: 150px;
+      flex-shrink: 0;
+      background: var(--bg-card);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .grid-catalog .card {
+      width: 100%;
+    }
+
+    .card:hover {
+      transform: translateY(-4px) scale(1.03);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7);
+      border-color: rgba(229, 9, 20, 0.6);
+    }
+
+    .card-poster-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      background: #101116;
+      overflow: hidden;
+    }
+
+    .card-poster {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(0, 0, 0, 0.82);
+      color: #fbbf24;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 7px;
+      border-radius: 6px;
+      border: 1px solid rgba(251, 191, 36, 0.35);
+    }
+
+    .card-type {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: var(--red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .card-body {
+      padding: 10px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+
+    .card-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .load-more-wrap {
+      text-align: center;
+      padding: 16px 0 32px;
+    }
+
+    /* Modal de Detalle (Película / Serie / Episodios) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(10px);
+      display: none;
+      overflow-y: auto;
+      padding: 24px 16px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .detail-box {
+      position: relative;
+      width: 100%;
+      max-width: 960px;
+      background: var(--bg-elevated);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9);
+      margin: auto;
+    }
+
+    .detail-banner {
+      position: relative;
+      width: 100%;
+      min-height: 280px;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: flex-end;
+      padding: 28px;
+    }
+
+    .detail-banner::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(18,19,24,0.2) 0%, rgba(18,19,24,0.98) 100%);
+    }
+
+    .close-modal-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.25);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .detail-header-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      gap: 22px;
+      align-items: flex-end;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .detail-poster {
+      width: 130px;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 2px solid rgba(255,255,255,0.15);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+      flex-shrink: 0;
+    }
+
+    .detail-main-info {
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .detail-title {
+      font-size: clamp(22px, 3vw, 34px);
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .detail-body {
+      padding: 20px 28px 32px;
+    }
+
+    .detail-overview {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #d1d5db;
+      margin-bottom: 24px;
+    }
+
+    /* Lista de Temporadas y Episodios */
+    .seasons-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 20px 0 16px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+
+    .season-btn {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .season-btn.active {
+      background: var(--red);
+      border-color: var(--red);
+    }
+
+    .episodes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 14px;
+    }
+
+    .ep-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .ep-card:hover {
+      background: rgba(229, 9, 20, 0.15);
+      border-color: var(--red);
+    }
+
+    .ep-num {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: var(--red);
+      color: #fff;
+      font-weight: 900;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .ep-info {
+      overflow: hidden;
+    }
+
+    .ep-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ep-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Reproductor de Video Propio a Pantalla Completa (Cero Anuncios) */
+    .player-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: #000;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .player-overlay.open {
+      display: flex;
+    }
+
+    #memetflixVideo {
+      width: 100%;
+      height: 100%;
+      max-height: 100vh;
+      background: #000;
+      outline: none;
+    }
+
+    #fallbackIframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: none;
+      background: #000;
+    }
+
+    /* Estilo de subtítulos grandes y legibles en TV y móvil */
+    video::cue {
+      background: rgba(0, 0, 0, 0.75);
+      color: #ffffff;
+      font-size: 1.15em;
+      font-family: sans-serif;
+      text-shadow: 0 2px 4px #000;
+    }
+
+    .player-hud {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 25%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.92) 100%);
+      padding: 20px 24px;
+      transition: opacity 0.3s ease;
+    }
+
+    .player-hud.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .player-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .player-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      text-shadow: 0 2px 8px #000;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .player-bottom {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .time-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e5e7eb;
+      min-width: 48px;
+      text-align: center;
+    }
+
+    .seek-slider {
+      flex: 1;
+      accent-color: var(--red);
+      height: 6px;
+      cursor: pointer;
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .ctrl-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .ctrl-btn {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      padding: 9px 15px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+    }
+
+    .ctrl-btn.primary {
+      background: var(--red);
+      border-color: var(--red);
+    }
+
+    .ctrl-select {
+      background: rgba(20, 20, 26, 0.92);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .player-loader {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(229, 9, 20, 0.25);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Modal de Login */
+    .login-box {
+      width: 100%;
+      max-width: 400px;
+      background: var(--bg-elevated);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 16px;
+      padding: 28px;
+      margin: auto;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .form-input {
+      width: 100%;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 8px;
+      padding: 11px 14px;
+      color: #fff;
+      font-size: 15px;
+    }
+
+    .status-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(18, 19, 24, 0.96);
+      border: 1px solid var(--red);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+      z-index: 999;
+      display: none;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.8);
+    }
+
+    @media (max-width: 680px) {
+      .navbar {
+        padding: 10px 14px;
+      }
+      .brand {
+        font-size: 22px;
+      }
+      .search-input {
+        width: 140px;
+      }
+      .search-input:focus {
+        width: 175px;
+      }
+      .main-content {
+        padding-top: 108px;
+      }
+      .hero {
+        min-height: 360px;
+        padding: 24px 16px;
+      }
+      .section {
+        padding: 16px 14px 4px;
+      }
+      .detail-banner {
+        padding: 18px;
+        min-height: 210px;
+      }
+      .detail-body {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barra de Navegación -->
+  <header class="navbar">
+    <div class="brand focusable" tabindex="0" onclick="switchTab('home')">Memetflix</div>
+
+    <nav class="nav-links">
+      <button class="nav-btn active focusable" id="tab-home" onclick="switchTab('home')">Inicio</button>
+      <button class="nav-btn focusable" id="tab-movies" onclick="switchTab('movies')">Películas</button>
+      <button class="nav-btn focusable" id="tab-tvshows" onclick="switchTab('tvshows')">Series</button>
+      <button class="nav-btn focusable" id="tab-animes" onclick="switchTab('animes')">Anime</button>
+    </nav>
+
+    <div class="nav-actions">
+      <div class="search-box">
+        <input type="text" id="searchInput" class="search-input focusable" placeholder="Buscar título..." />
+      </div>
+      <button class="user-btn focusable" id="userBtn" onclick="openLoginModal()">👤 Cuenta</button>
+    </div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <main class="main-content" id="mainContent">
+    <!-- Vista Inicio -->
+    <div id="view-home">
+      <section class="hero" id="heroBanner">
+        <div class="hero-info">
+          <span class="hero-badge" id="heroBadge">ESTRENO DESTACADO</span>
+          <h1 class="hero-title" id="heroTitle">Cargando catálogo...</h1>
+          <div class="hero-meta">
+            <span class="hero-rating" id="heroRating">★ --</span>
+            <span id="heroYear">----</span>
+            <span id="heroType">HD 1080p</span>
+          </div>
+          <p class="hero-overview" id="heroOverview">Conectando directamente con el catálogo de películas, series y anime sin publicidad...</p>
+          <div class="hero-buttons" id="heroButtons" style="display:none;">
+            <button class="btn-primary focusable" id="heroPlayBtn">▶ Ver Ahora</button>
+            <button class="btn-secondary focusable" id="heroInfoBtn">ℹ Episodios / Detalles</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title">Películas Recientes</h2>
+          <button class="nav-btn focusable" onclick="switchTab('movies')">Ver todas →</button>
+        </div>
+        <div class="row-scroll" id="row-movies"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title">Series Destacadas</h2>
+          <button class="nav-btn focusable" onclick="switchTab('tvshows')">Ver todas →</button>
+        </div>
+        <div class="row-scroll" id="row-tvshows"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title">Anime en Emisión y Clásicos</h2>
+          <button class="nav-btn focusable" onclick="switchTab('animes')">Ver todos →</button>
+        </div>
+        <div class="row-scroll" id="row-animes"></div>
+      </section>
+    </div>
+
+    <!-- Vista Catálogo / Búsqueda -->
+    <div id="view-catalog" style="display:none;">
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title" id="catalogTitle">Catálogo</h2>
+          <div style="display:flex; gap:8px;">
+            <button class="nav-btn active focusable" id="sort-latest" onclick="changeSort('latest')">Más Recientes</button>
+            <button class="nav-btn focusable" id="sort-rating" onclick="changeSort('rating')">Mejor Valoradas</button>
+          </div>
+        </div>
+        <div class="grid-catalog" id="catalogGrid"></div>
+        <div class="load-more-wrap">
+          <button class="btn-primary focusable" id="loadMoreBtn" onclick="loadMoreCatalog()">Cargar más títulos</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Modal Detalle de Película / Serie -->
+  <div class="modal-backdrop" id="detailModal">
+    <div class="detail-box">
+      <div class="detail-banner" id="detailBanner">
+        <button class="close-modal-btn focusable" onclick="closeDetailModal()">✕</button>
+        <div class="detail-header-content">
+          <img class="detail-poster" id="detailPoster" src="" alt="Poster" />
+          <div class="detail-main-info">
+            <span class="hero-badge" id="detailTypeBadge">PELÍCULA</span>
+            <h2 class="detail-title" id="detailTitle">Título</h2>
+            <div class="hero-meta">
+              <span class="hero-rating" id="detailRating">★ 0.0</span>
+              <span id="detailYear">2026</span>
+              <span id="detailRuntime"></span>
+            </div>
+            <div class="hero-buttons" id="detailPlayWrap" style="margin-top:12px;">
+              <button class="btn-primary focusable" id="detailPlayBtn">▶ Reproducir Ahora (Sin Anuncios)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="detail-body">
+        <p class="detail-overview" id="detailOverview"></p>
+
+        <!-- Contenedor exclusivo para Series y Anime -->
+        <div id="seriesSection" style="display:none;">
+          <h3 class="section-title" style="margin-bottom:12px;">Temporadas y Episodios</h3>
+          <div class="seasons-bar" id="seasonsBar"></div>
+          <div class="episodes-grid" id="episodesGrid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reproductor Nativo Memetflix (Sin Anuncios) -->
+  <div class="player-overlay" id="playerOverlay" onclick="onPlayerTap(event)">
+    <div class="player-loader" id="playerLoader">
+      <div class="spinner"></div>
+      <div id="playerLoaderText" style="font-weight:700; font-size:14px;">Extrayendo stream directo HD sin anuncios...</div>
+    </div>
+
+    <video id="memetflixVideo" playsinline crossorigin="anonymous"></video>
+    <iframe id="fallbackIframe" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+
+    <div class="player-hud" id="playerHud">
+      <div class="player-top">
+        <button class="ctrl-btn focusable" onclick="closePlayer()">← Volver</button>
+        <div class="player-title" id="playerTitle">Reproduciendo</div>
+        <div style="width:70px;"></div>
+      </div>
+
+      <div class="player-bottom">
+        <div class="progress-row">
+          <span class="time-label" id="currentTimeLabel">00:00</span>
+          <input type="range" class="seek-slider focusable" id="seekSlider" min="0" max="100" value="0" />
+          <span class="time-label" id="durationLabel">00:00</span>
+        </div>
+
+        <div class="controls-row">
+          <div class="ctrl-group">
+            <button class="ctrl-btn primary focusable" id="playPauseBtn" onclick="togglePlayPause()">⏸ Pausa</button>
+            <button class="ctrl-btn focusable" onclick="seekRelative(-10)">⏪ -10s</button>
+            <button class="ctrl-btn focusable" onclick="seekRelative(10)">⏩ +10s</button>
+          </div>
+
+          <div class="ctrl-group">
+            <select class="ctrl-select focusable" id="audioTrackSelect" onchange="onAudioTrackChange(this.value)" style="display:none;">
+              <option value="0">🔊 Audio</option>
+            </select>
+
+            <select class="ctrl-select focusable" id="subtitleSelect" onchange="onSubtitleChange(this.value)" style="display:none;">
+              <option value="-1">💬 Sin subtítulos</option>
+            </select>
+
+            <select class="ctrl-select focusable" id="qualitySelect" onchange="onQualityChange(this.value)" style="display:none;">
+              <option value="-1">⚙️ Calidad: Auto</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Inicio de Sesión (Cuenta LaMovie) -->
+  <div class="modal-backdrop" id="loginModal">
+    <div class="login-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <h3 style="font-size:20px; font-weight:900; color:var(--red);">Memetflix — Mi Cuenta</h3>
+        <button class="ctrl-btn focusable" onclick="closeLoginModal()">✕</button>
+      </div>
+      <div id="loggedOutView">
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+          Inicia sesión con tu cuenta de LaMovie para sincronizar tu perfil.
+        </p>
+        <div class="form-group">
+          <label class="form-label">Correo electrónico</label>
+          <input type="email" id="loginEmail" class="form-input focusable" placeholder="tucorreo@ejemplo.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input type="password" id="loginPassword" class="form-input focusable" placeholder="••••••••" />
+        </div>
+        <div id="loginError" style="color:#f87171; font-size:13px; margin-bottom:12px; display:none;"></div>
+        <button class="btn-primary focusable" style="width:100%; justify-content:center;" onclick="submitLogin()">Iniciar Sesión</button>
+      </div>
+      <div id="loggedInView" style="display:none; text-align:center;">
+        <p style="font-size:16px; font-weight:700; margin-bottom:8px;" id="userNameDisplay"></p>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;" id="userEmailDisplay"></p>
+        <button class="btn-secondary focusable" style="width:100%; justify-content:center;" onclick="logoutUser()">Cerrar Sesión</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-toast" id="statusToast"></div>
+
+  <script>
+    const FAST_API = "https://lamovie.la/wp-api/v1";
+    const AUTH_API = "https://lamovie.la/wp-json/wpf/v1";
+    const IMG_BASE = "https://lamovie.la/wp-content/uploads";
+    const TMDB_IMG = "https://image.tmdb.org/t/p/w780";
+
+    let currentTab = "home";
+    let currentSort = "latest";
+    let catalogPage = 1;
+    let currentDetailItem = null;
+    let hlsInstance = null;
+    let hudTimeout = null;
+    let searchDebounce = null;
+
+    function showToast(msg) {
+      const t = document.getElementById("statusToast");
+      t.textContent = msg;
+      t.style.display = "block";
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => { t.style.display = "none"; }, 3000);
+    }
+
+    function getImageUrl(path, isBackdrop) {
+      if (!path) return "";
+      if (path.startsWith("http")) return path;
+      return IMG_BASE + (path.startsWith("/") ? path : "/" + path);
+    }
+
+    // Llamada a la API a través del puente nativo Java (sin restricciones CORS)
+    async function apiGet(url) {
+      const token = localStorage.getItem("authToken") || "";
+      if (window.MemetflixNative && typeof window.MemetflixNative.httpGet === "function") {
+        return await new Promise((resolve, reject) => {
+          setTimeout(() => {
+            try {
+              const raw = window.MemetflixNative.httpGet(url, token);
+              resolve(JSON.parse(raw));
+            } catch (err) {
+              reject(err);
+            }
+          }, 10);
+        });
+      }
+      const res = await fetch(url, {
+        headers: {
+          "Accept": "application/json",
+          ...(token ? { "Authorization": "Bearer " + token } : {})
+        }
+      });
+      return await res.json();
+    }
+
+    async function apiPost(url, bodyObj) {
+      const token = localStorage.getItem("authToken") || "";
+      const bodyStr = JSON.stringify(bodyObj);
+      if (window.MemetflixNative && typeof window.MemetflixNative.httpPost === "function") {
+        return await new Promise((resolve, reject) => {
+          setTimeout(() => {
+            try {
+              const raw = window.MemetflixNative.httpPost(url, bodyStr, token);
+              resolve(JSON.parse(raw));
+            } catch (err) {
+              reject(err);
+            }
+          }, 10);
+        });
+      }
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: bodyStr
+      });
+      return await res.json();
+    }
+
+    function typeLabel(type) {
+      if (type === "tvshows") return "SERIE";
+      if (type === "animes") return "ANIME";
+      return "PELÍCULA";
+    }
+
+    function createPosterCard(item) {
+      const card = document.createElement("div");
+      card.className = "card focusable";
+      card.tabIndex = 0;
+
+      const posterUrl = getImageUrl(item.images && item.images.poster);
+      const year = item.release_date ? item.release_date.substring(0, 4) : "";
+      const rating = item.rating && parseFloat(item.rating) > 0 ? parseFloat(item.rating).toFixed(1) : "HD";
+
+      card.innerHTML = `
+        <div class="card-poster-wrap">
+          <img class="card-poster" src="${posterUrl}" loading="lazy" onerror="this.style.opacity='0.2'" alt="" />
+          <span class="card-badge">★ ${rating}</span>
+          <span class="card-type">${typeLabel(item.type)}</span>
+        </div>
+        <div class="card-body">
+          <div class="card-title">${item.title || "Sin título"}</div>
+          <div class="card-sub">${year || "Estreno"}</div>
+        </div>
+      `;
+
+      const openFn = () => openDetailModal(item);
+      card.addEventListener("click", openFn);
+      card.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.keyCode === 13 || e.keyCode === 23) {
+          e.preventDefault();
+          openFn();
+        }
+      });
+      return card;
+    }
+
+    async function loadHomeCatalog() {
+      try {
+        const [moviesRes, tvRes, animeRes] = await Promise.all([
+          apiGet(`${FAST_API}/listing/movies?page=1&orderBy=latest&order=desc&postType=movies&postsPerPage=18`),
+          apiGet(`${FAST_API}/listing/tvshows?page=1&orderBy=latest&order=desc&postType=tvshows&postsPerPage=18`),
+          apiGet(`${FAST_API}/listing/animes?page=1&orderBy=latest&order=desc&postType=animes&postsPerPage=18`)
+        ]);
+
+        const movies = (moviesRes && moviesRes.data && moviesRes.data.posts) || [];
+        const tvshows = (tvRes && tvRes.data && tvRes.data.posts) || [];
+        const animes = (animeRes && animeRes.data && animeRes.data.posts) || [];
+
+        if (movies.length > 0) {
+          setHeroItem(movies[0]);
+        }
+
+        renderRow("row-movies", movies);
+        renderRow("row-tvshows", tvshows);
+        renderRow("row-animes", animes);
+      } catch (e) {
+        console.error("Error cargando inicio:", e);
+      }
+    }
+
+    function setHeroItem(item) {
+      const banner = document.getElementById("heroBanner");
+      const bg = getImageUrl((item.images && item.images.backdrop) || (item.images && item.images.poster), true);
+      banner.style.backgroundImage = `url('${bg}')`;
+
+      document.getElementById("heroBadge").textContent = "ESTRENO • " + typeLabel(item.type);
+      document.getElementById("heroTitle").textContent = item.title || "";
+      document.getElementById("heroRating").textContent = "★ " + (item.rating || "8.0");
+      document.getElementById("heroYear").textContent = item.release_date ? item.release_date.substring(0, 4) : "";
+      document.getElementById("heroOverview").textContent = item.overview || "Sin descripción disponible.";
+      document.getElementById("heroButtons").style.display = "flex";
+
+      document.getElementById("heroPlayBtn").onclick = () => {
+        if (item.type === "movies" || !item.type) {
+          startDirectPlayback(item._id, item.title);
+        } else {
+          openDetailModal(item);
+        }
+      };
+      document.getElementById("heroInfoBtn").onclick = () => openDetailModal(item);
+    }
+
+    function renderRow(containerId, items) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = "";
+      items.forEach(item => container.appendChild(createPosterCard(item)));
+    }
+
+    async function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll(".nav-links .nav-btn").forEach(b => b.classList.remove("active"));
+      const activeBtn = document.getElementById("tab-" + tab);
+      if (activeBtn) activeBtn.classList.add("active");
+
+      if (tab === "home") {
+        document.getElementById("view-home").style.display = "block";
+        document.getElementById("view-catalog").style.display = "none";
+      } else {
+        document.getElementById("view-home").style.display = "none";
+        document.getElementById("view-catalog").style.display = "block";
+        catalogPage = 1;
+        const titles = { movies: "Películas", tvshows: "Series de TV", animes: "Anime" };
+        document.getElementById("catalogTitle").textContent = titles[tab] || "Catálogo";
+        document.getElementById("catalogGrid").innerHTML = "";
+        document.getElementById("loadMoreBtn").style.display = "inline-flex";
+        await fetchCatalogPage(true);
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    async function changeSort(sort) {
+      currentSort = sort;
+      document.getElementById("sort-latest").classList.toggle("active", sort === "latest");
+      document.getElementById("sort-rating").classList.toggle("active", sort === "rating");
+      catalogPage = 1;
+      document.getElementById("catalogGrid").innerHTML = "";
+      await fetchCatalogPage(true);
+    }
+
+    async function fetchCatalogPage(reset) {
+      const grid = document.getElementById("catalogGrid");
+      if (reset) grid.innerHTML = "";
+      try {
+        const url = `${FAST_API}/listing/${currentTab}?page=${catalogPage}&orderBy=${currentSort}&order=desc&postType=${currentTab}&postsPerPage=24`;
+        const res = await apiGet(url);
+        const posts = (res && res.data && res.data.posts) || [];
+        posts.forEach(item => grid.appendChild(createPosterCard(item)));
+      } catch (e) {
+        showToast("Error al cargar catálogo");
+      }
+    }
+
+    async function loadMoreCatalog() {
+      catalogPage++;
+      await fetchCatalogPage(false);
+    }
+
+    // Buscador en tiempo real
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      const q = e.target.value.trim();
+      clearTimeout(searchDebounce);
+      if (q.length === 0) {
+        switchTab("home");
+        return;
+      }
+      if (q.length < 3) return;
+      searchDebounce = setTimeout(async () => {
+        document.getElementById("view-home").style.display = "none";
+        document.getElementById("view-catalog").style.display = "block";
+        document.getElementById("catalogTitle").textContent = `Resultados para: "${q}"`;
+        document.getElementById("loadMoreBtn").style.display = "none";
+        const grid = document.getElementById("catalogGrid");
+        grid.innerHTML = "";
+        try {
+          const res = await apiGet(`${FAST_API}/search?postType=any&q=${encodeURIComponent(q)}&postsPerPage=24`);
+          const posts = (res && res.data && res.data.posts) || [];
+          if (posts.length === 0) {
+            grid.innerHTML = `<p style="color:var(--text-muted); grid-column:1/-1;">No se encontraron resultados.</p>`;
+          } else {
+            posts.forEach(item => grid.appendChild(createPosterCard(item)));
+          }
+        } catch (err) {
+          grid.innerHTML = `<p style="color:var(--text-muted); grid-column:1/-1;">Sin resultados para "${q}".</p>`;
+        }
+      }, 450);
+    });
+
+    // Modal de Detalle y Episodios
+    async function openDetailModal(item) {
+      currentDetailItem = item;
+      const modal = document.getElementById("detailModal");
+      const banner = document.getElementById("detailBanner");
+      const bg = getImageUrl((item.images && item.images.backdrop) || (item.images && item.images.poster), true);
+      banner.style.backgroundImage = `url('${bg}')`;
+
+      document.getElementById("detailPoster").src = getImageUrl(item.images && item.images.poster);
+      document.getElementById("detailTypeBadge").textContent = typeLabel(item.type);
+      document.getElementById("detailTitle").textContent = item.title || "";
+      document.getElementById("detailRating").textContent = "★ " + (item.rating || "8.0");
+      document.getElementById("detailYear").textContent = item.release_date ? item.release_date.substring(0, 4) : "";
+      document.getElementById("detailRuntime").textContent = item.runtime ? `${Math.round(item.runtime)} min` : "";
+      document.getElementById("detailOverview").textContent = item.overview || "Sin descripción.";
+
+      const isSeries = item.type === "tvshows" || item.type === "animes";
+      document.getElementById("detailPlayWrap").style.display = isSeries ? "none" : "flex";
+      document.getElementById("seriesSection").style.display = isSeries ? "block" : "none";
+
+      document.getElementById("detailPlayBtn").onclick = () => {
+        startDirectPlayback(item._id, item.title);
+      };
+
+      modal.classList.add("open");
+
+      if (isSeries) {
+        await loadSeriesEpisodes(item._id, 1, true);
+      }
+    }
+
+    function closeDetailModal() {
+      document.getElementById("detailModal").classList.remove("open");
+    }
+
+    async function loadSeriesEpisodes(seriesId, seasonNum, renderSeasons) {
+      const epGrid = document.getElementById("episodesGrid");
+      const seasonsBar = document.getElementById("seasonsBar");
+      epGrid.innerHTML = `<p style="color:var(--text-muted);">Cargando episodios de la temporada ${seasonNum}...</p>`;
+
+      try {
+        const res = await apiGet(`${FAST_API}/single/episodes/list?_id=${seriesId}&season=${seasonNum}&page=1&postsPerPage=50`);
+        const data = (res && res.data) || {};
+        const seasons = Array.isArray(data.seasons) ? data.seasons.slice().sort((a, b) => Number(a) - Number(b)) : [1];
+        const posts = Array.isArray(data.posts) ? data.posts : [];
+
+        if (renderSeasons) {
+          seasonsBar.innerHTML = "";
+          seasons.forEach(sNum => {
+            const btn = document.createElement("button");
+            btn.className = "season-btn focusable" + (Number(sNum) === Number(seasonNum) ? " active" : "");
+            btn.textContent = "Temporada " + sNum;
+            btn.onclick = () => {
+              document.querySelectorAll(".season-btn").forEach(b => b.classList.remove("active"));
+              btn.classList.add("active");
+              loadSeriesEpisodes(seriesId, sNum, false);
+            };
+            seasonsBar.appendChild(btn);
+          });
+        }
+
+        epGrid.innerHTML = "";
+        if (posts.length === 0) {
+          epGrid.innerHTML = `<p style="color:var(--text-muted);">No hay episodios disponibles.</p>`;
+          return;
+        }
+
+        posts.forEach(ep => {
+          const card = document.createElement("div");
+          card.className = "ep-card focusable";
+          card.tabIndex = 0;
+          const epNum = ep.episode_number || 1;
+          card.innerHTML = `
+            <div class="ep-num">${epNum}</div>
+            <div class="ep-info">
+              <div class="ep-title">${ep.title || ("Episodio " + epNum)}</div>
+              <div class="ep-meta">Temporada ${ep.season_number || seasonNum} • ${ep.runtime ? ep.runtime + " min" : "HD"}</div>
+            </div>
+          `;
+          const playEp = () => startDirectPlayback(ep._id, ep.title || `${currentDetailItem.title} - T${seasonNum}:E${epNum}`);
+          card.addEventListener("click", playEp);
+          card.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.keyCode === 13 || e.keyCode === 23) {
+              e.preventDefault();
+              playEp();
+            }
+          });
+          epGrid.appendChild(card);
+        });
+      } catch (e) {
+        epGrid.innerHTML = `<p style="color:#f87171;">Error al cargar los episodios.</p>`;
+      }
+    }
+
+    // =========================================================================
+    // REPRODUCTOR DIRECTO MEMETFLIX (EXTRAE EL .M3U8 Y .VTT SIN ANUNCIOS)
+    // =========================================================================
+    async function startDirectPlayback(postId, title) {
+      const overlay = document.getElementById("playerOverlay");
+      const video = document.getElementById("memetflixVideo");
+      const iframe = document.getElementById("fallbackIframe");
+      const loader = document.getElementById("playerLoader");
+
+      overlay.classList.add("open");
+      loader.style.display = "block";
+      document.getElementById("playerLoaderText").textContent = "Conectando con servidor HD sin anuncios...";
+      document.getElementById("playerTitle").textContent = title || "Memetflix";
+      document.getElementById("playerHud").classList.remove("hidden");
+
+      video.style.display = "block";
+      iframe.style.display = "none";
+      iframe.src = "about:blank";
+
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+      video.pause();
+      video.removeAttribute("src");
+      video.innerHTML = "";
+
+      try {
+        let streamData = null;
+        if (window.MemetflixNative && typeof window.MemetflixNative.resolveVideoStream === "function") {
+          streamData = await new Promise((resolve, reject) => {
+            setTimeout(() => {
+              try {
+                const raw = window.MemetflixNative.resolveVideoStream(String(postId));
+                resolve(JSON.parse(raw));
+              } catch (err) {
+                reject(err);
+              }
+            }, 40);
+          });
+        }
+
+        if (streamData && streamData.m3u8) {
+          playHlsStream(streamData.m3u8, streamData.subtitles || []);
+        } else if (streamData && streamData.embedUrl) {
+          // Fallback en caso de que un servidor específico no sea vimeos HLS
+          loader.style.display = "none";
+          video.style.display = "none";
+          iframe.style.display = "block";
+          iframe.src = streamData.embedUrl;
+        } else {
+          showToast("No se encontró fuente de video disponible");
+          closePlayer();
+        }
+      } catch (e) {
+        console.error("Error al resolver stream:", e);
+        showToast("Error al iniciar reproducción");
+        closePlayer();
+      }
+    }
+
+    function playHlsStream(m3u8Url, subtitles) {
+      const video = document.getElementById("memetflixVideo");
+      const loader = document.getElementById("playerLoader");
+      const audioSelect = document.getElementById("audioTrackSelect");
+      const subSelect = document.getElementById("subtitleSelect");
+      const qualSelect = document.getElementById("qualitySelect");
+
+      audioSelect.style.display = "none";
+      subSelect.style.display = "none";
+      qualSelect.style.display = "none";
+
+      // Configurar pistas de subtítulos (.vtt)
+      video.innerHTML = "";
+      subSelect.innerHTML = `<option value="-1">💬 Subtítulos: Desactivados</option>`;
+      if (Array.isArray(subtitles) && subtitles.length > 0) {
+        subtitles.forEach((sub, idx) => {
+          if (!sub.file || sub.file.includes("empty.srt")) return;
+          const track = document.createElement("track");
+          track.kind = "subtitles";
+          track.label = sub.label || ("Subtítulo " + (idx + 1));
+          track.srclang = "es";
+          track.src = sub.file;
+          if (idx === 0) track.default = true;
+          video.appendChild(track);
+
+          const opt = document.createElement("option");
+          opt.value = String(idx);
+          opt.textContent = "💬 Subtítulos: " + (sub.label || "Español");
+          subSelect.appendChild(opt);
+        });
+        if (subSelect.options.length > 1) {
+          subSelect.style.display = "inline-block";
+          subSelect.value = "0";
+        }
+      }
+
+      if (window.Hls && Hls.isSupported()) {
+        hlsInstance = new Hls({
+          enableWorker: true,
+          maxBufferLength: 30
+        });
+        hlsInstance.loadSource(m3u8Url);
+        hlsInstance.attachMedia(video);
+
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, function () {
+          loader.style.display = "none";
+          video.play().catch(() => {});
+
+          // Pistas de audio (Español Latino / Inglés / Japonés)
+          const tracks = hlsInstance.audioTracks || [];
+          if (tracks.length > 1) {
+            audioSelect.innerHTML = "";
+            tracks.forEach((t, idx) => {
+              const opt = document.createElement("option");
+              opt.value = String(idx);
+              opt.textContent = "🔊 Audio: " + (t.name || t.lang || ("Pista " + (idx + 1)));
+              if (idx === hlsInstance.audioTrack) opt.selected = true;
+              audioSelect.appendChild(opt);
+            });
+            audioSelect.style.display = "inline-block";
+          }
+
+          // Calidades de video
+          const levels = hlsInstance.levels || [];
+          if (levels.length > 1) {
+            qualSelect.innerHTML = `<option value="-1">⚙️ Calidad: Auto</option>`;
+            levels.forEach((lv, idx) => {
+              const opt = document.createElement("option");
+              opt.value = String(idx);
+              opt.textContent = `⚙️ ${lv.height || 720}p HD`;
+              qualSelect.appendChild(opt);
+            });
+            qualSelect.style.display = "inline-block";
+          }
+        });
+
+        hlsInstance.on(Hls.Events.AUDIO_TRACKS_UPDATED, function () {
+          const tracks = hlsInstance.audioTracks || [];
+          if (tracks.length > 1) {
+            audioSelect.innerHTML = "";
+            tracks.forEach((t, idx) => {
+              const opt = document.createElement("option");
+              opt.value = String(idx);
+              opt.textContent = "🔊 Audio: " + (t.name || t.lang || ("Pista " + (idx + 1)));
+              if (idx === hlsInstance.audioTrack) opt.selected = true;
+              audioSelect.appendChild(opt);
+            });
+            audioSelect.style.display = "inline-block";
+          }
+        });
+
+        hlsInstance.on(Hls.Events.ERROR, function (event, data) {
+          if (data.fatal) {
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+              hlsInstance.startLoad();
+            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+              hlsInstance.recoverMediaError();
+            }
+          }
+        });
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = m3u8Url;
+        video.addEventListener("loadedmetadata", () => {
+          loader.style.display = "none";
+          video.play().catch(() => {});
+        }, { once: true });
+      }
+
+      scheduleHideHud();
+    }
+
+    function onAudioTrackChange(idxStr) {
+      if (hlsInstance) {
+        hlsInstance.audioTrack = parseInt(idxStr, 10);
+        showToast("Idioma de audio cambiado");
+      }
+    }
+
+    function onSubtitleChange(idxStr) {
+      const video = document.getElementById("memetflixVideo");
+      const idx = parseInt(idxStr, 10);
+      const tracks = video.textTracks;
+      for (let i = 0; i < tracks.length; i++) {
+        tracks[i].mode = (i === idx) ? "showing" : "disabled";
+      }
+    }
+
+    function onQualityChange(idxStr) {
+      if (hlsInstance) {
+        hlsInstance.currentLevel = parseInt(idxStr, 10);
+      }
+    }
+
+    function togglePlayPause() {
+      const video = document.getElementById("memetflixVideo");
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+      scheduleHideHud();
+    }
+
+    function seekRelative(seconds) {
+      const video = document.getElementById("memetflixVideo");
+      video.currentTime = Math.max(0, Math.min(video.duration || 0, video.currentTime + seconds));
+      scheduleHideHud();
+    }
+
+    function closePlayer() {
+      const overlay = document.getElementById("playerOverlay");
+      const video = document.getElementById("memetflixVideo");
+      const iframe = document.getElementById("fallbackIframe");
+      video.pause();
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+      video.removeAttribute("src");
+      iframe.src = "about:blank";
+      overlay.classList.remove("open");
+    }
+
+    function formatTime(sec) {
+      if (!Number.isFinite(sec) || sec < 0) return "00:00";
+      const s = Math.floor(sec);
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const r = s % 60;
+      const pad = n => String(n).padStart(2, "0");
+      return h > 0 ? `${pad(h)}:${pad(m)}:${pad(r)}` : `${pad(m)}:${pad(r)}`;
+    }
+
+    const videoEl = document.getElementById("memetflixVideo");
+    const seekSlider = document.getElementById("seekSlider");
+
+    videoEl.addEventListener("play", () => {
+      document.getElementById("playPauseBtn").textContent = "⏸ Pausa";
+    });
+    videoEl.addEventListener("pause", () => {
+      document.getElementById("playPauseBtn").textContent = "▶ Play";
+    });
+    videoEl.addEventListener("timeupdate", () => {
+      document.getElementById("currentTimeLabel").textContent = formatTime(videoEl.currentTime);
+      document.getElementById("durationLabel").textContent = formatTime(videoEl.duration);
+      if (videoEl.duration > 0) {
+        seekSlider.value = (videoEl.currentTime / videoEl.duration) * 100;
+      }
+    });
+
+    seekSlider.addEventListener("input", (e) => {
+      if (videoEl.duration > 0) {
+        videoEl.currentTime = (parseFloat(e.target.value) / 100) * videoEl.duration;
+      }
+      scheduleHideHud();
+    });
+
+    function onPlayerTap(e) {
+      const hud = document.getElementById("playerHud");
+      if (hud.classList.contains("hidden")) {
+        hud.classList.remove("hidden");
+        scheduleHideHud();
+      } else if (e.target.id === "memetflixVideo" || e.target.id === "playerHud") {
+        hud.classList.add("hidden");
+      }
+    }
+
+    function scheduleHideHud() {
+      const hud = document.getElementById("playerHud");
+      hud.classList.remove("hidden");
+      clearTimeout(hudTimeout);
+      hudTimeout = setTimeout(() => {
+        if (!videoEl.paused) {
+          hud.classList.add("hidden");
+        }
+      }, 4000);
+    }
+
+    // Autenticación de Usuario (/wp-json/wpf/v1/auth/login)
+    function updateAccountUi() {
+      const rawUser = localStorage.getItem("authUser");
+      const token = localStorage.getItem("authToken");
+      const userBtn = document.getElementById("userBtn");
+      if (rawUser && token) {
+        try {
+          const u = JSON.parse(rawUser);
+          userBtn.textContent = "👤 " + (u.name || u.username || "Mi Cuenta");
+          document.getElementById("loggedOutView").style.display = "none";
+          document.getElementById("loggedInView").style.display = "block";
+          document.getElementById("userNameDisplay").textContent = u.name || u.username || "Usuario activo";
+          document.getElementById("userEmailDisplay").textContent = u.email || "";
+          return;
+        } catch (e) {}
+      }
+      userBtn.textContent = "👤 Iniciar Sesión";
+      document.getElementById("loggedOutView").style.display = "block";
+      document.getElementById("loggedInView").style.display = "none";
+    }
+
+    function openLoginModal() {
+      updateAccountUi();
+      document.getElementById("loginModal").classList.add("open");
+    }
+
+    function closeLoginModal() {
+      document.getElementById("loginModal").classList.remove("open");
+    }
+
+    async function submitLogin() {
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      const errEl = document.getElementById("loginError");
+      errEl.style.display = "none";
+
+      if (!email || !password) {
+        errEl.textContent = "Ingresa tu correo y contraseña.";
+        errEl.style.display = "block";
+        return;
+      }
+
+      try {
+        const res = await apiPost(`${AUTH_API}/auth/login`, { email, password });
+        if (res && !res.error && res.data && res.data.token) {
+          localStorage.setItem("authToken", res.data.token);
+          localStorage.setItem("authUser", JSON.stringify(res.data.user || { email }));
+          updateAccountUi();
+          closeLoginModal();
+          showToast("Sesión iniciada correctamente");
+        } else {
+          errEl.textContent = (res && res.msg) || "Credenciales incorrectas.";
+          errEl.style.display = "block";
+        }
+      } catch (e) {
+        errEl.textContent = "Error al conectar con el servidor.";
+        errEl.style.display = "block";
+      }
+    }
+
+    function logoutUser() {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("authUser");
+      updateAccountUi();
+      closeLoginModal();
+      showToast("Sesión cerrada");
+    }
+
+    // Manejo global del botón Atrás (llamado desde Android MainActivity)
+    window.__handleAndroidBack = function () {
+      if (document.getElementById("playerOverlay").classList.contains("open")) {
+        closePlayer();
+        return true;
+      }
+      if (document.getElementById("detailModal").classList.contains("open")) {
+        closeDetailModal();
+        return true;
+      }
+      if (document.getElementById("loginModal").classList.contains("open")) {
+        closeLoginModal();
+        return true;
+      }
+      if (currentTab !== "home") {
+        switchTab("home");
+        return true;
+      }
+      return false;
+    };
+
+    // Inicialización
+    updateAccountUi();
+    loadHomeCatalog();
+  </script>
+</body>
+</html>
