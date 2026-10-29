@@ -132,6 +132,7 @@ public class MainActivity extends Activity {
     private boolean backLongPressHandled = false;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private CastManager castManager;
     private final Runnable hideCursorRunnable = new Runnable() {
         @Override
         public void run() {
@@ -438,6 +439,17 @@ public class MainActivity extends Activity {
 
         // Registrar puente nativo para consumir los endpoints de LaMovie y extraer streams .m3u8 directos
         webView.addJavascriptInterface(new MemetflixBridge(), "MemetflixNative");
+        castManager = new CastManager(this, new CastManager.Listener() {
+            @Override
+            public void onDevices(String devicesJson) {
+                runJsCallback("__onCastDevices", devicesJson);
+            }
+
+            @Override
+            public void onStatus(String statusJson) {
+                runJsCallback("__onCastStatus", statusJson);
+            }
+        });
 
         webView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
@@ -676,6 +688,57 @@ public class MainActivity extends Activity {
                 return "{\"ok\":false}";
             }
         }
+
+        // Transmitir a la TV: la lista de equipos y el estado llegan por __onCastDevices / __onCastStatus
+        @JavascriptInterface
+        public void castDiscover() {
+            if (castManager != null) castManager.discover();
+        }
+
+        @JavascriptInterface
+        public void castStart(String deviceId, String mediaJson) {
+            if (castManager != null) castManager.start(deviceId, mediaJson);
+        }
+
+        @JavascriptInterface
+        public void castControl(String action, double value) {
+            if (castManager != null) castManager.control(action, value);
+        }
+
+        @JavascriptInterface
+        public String openScreenMirroring() {
+            return openSystemScreenCast() ? "ok" : "fail";
+        }
+    }
+
+    /** Llama a window.<fn>(json) en la interfaz desde cualquier hilo. */
+    private void runJsCallback(final String fn, final String json) {
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (webView != null) {
+                    webView.evaluateJavascript("window." + fn + " && window." + fn + "(" + json + ")", null);
+                }
+            }
+        });
+    }
+
+    /** Abre "Transmitir pantalla" / "Smart View" del sistema para duplicar todo el celular. */
+    private boolean openSystemScreenCast() {
+        String[] actions = new String[]{
+                "android.settings.CAST_SETTINGS",
+                "android.settings.WIFI_DISPLAY_SETTINGS"
+        };
+        for (String action : actions) {
+            try {
+                Intent intent = new Intent(action);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                return true;
+            } catch (Throwable ignored) {
+            }
+        }
+        return false;
     }
 
     private String performHttpRequest(String urlStr, String method, String body, String bearer, String referer) {
@@ -1121,6 +1184,10 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         mainHandler.removeCallbacksAndMessages(null);
+        if (castManager != null) {
+            castManager.release();
+            castManager = null;
+        }
         if (webView != null) {
             webView.stopLoading();
             webView.destroy();

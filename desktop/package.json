@@ -1,7 +1,7 @@
 {
   "name": "memetflix-desktop",
   "productName": "Memetflix",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Memetflix para Windows",
   "main": "main.js",
   "author": "Memetflix",
@@ -26,6 +26,7 @@
     "files": [
       "main.js",
       "preload.js",
+      "cast.js",
       "build/icon.png",
       "package.json"
     ],

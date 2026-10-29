@@ -27,6 +27,13 @@ Desde Linux también funciona si está instalado `wine` (64 y 32 bits).
 
 Sube `version` en `package.json` en cada versión nueva.
 
+## Transmitir a la TV
+El botón **📺 Transmitir** del reproductor busca Chromecast / Google TV y Smart TV
+(DLNA: Samsung, LG, Sony...) en la misma red. La TV pide el video a esta PC
+(`cast.js`), así que la primera vez Windows pregunta si Memetflix puede usar la
+red: marca **Redes privadas** y pulsa **Permitir**. Si no aparece ninguna TV,
+también se puede duplicar la pantalla con `Win + K`.
+
 ## Teclas
 - `Esc` o el botón Atrás del ratón: igual que el botón Atrás de Android.
 - `F11`: pantalla completa.

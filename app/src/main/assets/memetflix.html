@@ -828,7 +828,184 @@
       box-shadow: 0 8px 25px rgba(0,0,0,0.8);
     }
 
+    /* Continuar viendo: barra de avance sobre el póster */
+    .card-progress {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .card-progress > span {
+      display: block;
+      height: 100%;
+      background: var(--red);
+    }
+
+    /* Diálogos dentro del reproductor (continuar / transmitir) */
+    .player-dialog {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.72);
+      padding: 16px;
+    }
+
+    .player-dialog.open {
+      display: flex;
+    }
+
+    .player-dialog-box {
+      width: 100%;
+      max-width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: var(--bg-elevated);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .player-dialog-box h3 {
+      font-size: 19px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .player-dialog-box p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    .dialog-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .dialog-actions .ctrl-btn {
+      width: 100%;
+      padding: 12px 15px;
+      font-size: 14px;
+    }
+
+    .cast-device-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+      text-align: left;
+    }
+
+    .cast-device-list .ctrl-btn {
+      width: 100%;
+      text-align: left;
+    }
+
+    .cast-device-kind {
+      float: right;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Pantalla que se ve en el celular/PC mientras se transmite a la TV */
+    .cast-banner {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: #000 center / cover no-repeat;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .cast-banner.open {
+      display: flex;
+    }
+
+    .cast-banner::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.78);
+    }
+
+    .cast-banner > * {
+      position: relative;
+    }
+
+    .cast-banner-icon {
+      font-size: 54px;
+    }
+
+    .cast-banner-title {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .cast-banner-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Sugerencia del siguiente capítulo */
+    .next-episode-card {
+      position: absolute;
+      right: 24px;
+      bottom: 130px;
+      z-index: 15;
+      width: calc(100% - 48px);
+      max-width: 340px;
+      display: none;
+      background: rgba(18, 19, 24, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    }
+
+    .next-episode-card.open {
+      display: block;
+    }
+
+    .next-episode-label {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--red);
+      text-transform: uppercase;
+    }
+
+    .next-episode-title {
+      font-size: 15px;
+      font-weight: 800;
+      margin: 4px 0 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .next-episode-card .ctrl-group .ctrl-btn {
+      flex: 1;
+    }
+
     @media (max-width: 680px) {
+      .next-episode-card {
+        right: 12px;
+        bottom: 150px;
+        width: calc(100% - 24px);
+      }
       .navbar {
         padding: 10px 14px;
       }
@@ -901,6 +1078,13 @@
             <button class="btn-secondary focusable" id="heroInfoBtn">ℹ Episodios / Detalles</button>
           </div>
         </div>
+      </section>
+
+      <section class="section" id="continueSection" style="display:none;">
+        <div class="section-header">
+          <h2 class="section-title">Continuar viendo</h2>
+        </div>
+        <div class="row-scroll" id="row-continue"></div>
       </section>
 
       <section class="section">
@@ -990,11 +1174,17 @@
     <video id="memetflixVideo" playsinline crossorigin="anonymous"></video>
     <iframe id="fallbackIframe" allowfullscreen allow="autoplay; encrypted-media"></iframe>
 
+    <div class="cast-banner" id="castBanner">
+      <div class="cast-banner-icon">📺</div>
+      <div class="cast-banner-title" id="castBannerTitle">Transmitiendo</div>
+      <div class="cast-banner-sub" id="castBannerSub">Conectando con la TV...</div>
+    </div>
+
     <div class="player-hud" id="playerHud">
       <div class="player-top">
         <button class="ctrl-btn focusable" onclick="closePlayer()">← Volver</button>
         <div class="player-title" id="playerTitle">Reproduciendo</div>
-        <div style="width:70px;"></div>
+        <button class="ctrl-btn focusable" id="castBtn" onclick="openCastDialog()" style="display:none;">📺 Transmitir</button>
       </div>
 
       <div class="player-bottom">
@@ -1024,6 +1214,40 @@
               <option value="-1">⚙️ Calidad: Auto</option>
             </select>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="next-episode-card" id="nextEpisodeCard" onclick="event.stopPropagation()">
+      <div class="next-episode-label">Siguiente episodio</div>
+      <div class="next-episode-title" id="nextEpisodeTitle"></div>
+      <div class="ctrl-group">
+        <button class="ctrl-btn primary focusable" id="nextEpisodePlayBtn" onclick="playNextEpisode()">▶ Reproducir</button>
+        <button class="ctrl-btn focusable" onclick="dismissNextEpisode()">Seguir viendo</button>
+      </div>
+    </div>
+
+    <div class="player-dialog" id="resumeDialog" onclick="event.stopPropagation()">
+      <div class="player-dialog-box">
+        <h3>¿Continuar donde lo dejaste?</h3>
+        <p id="resumeDialogText">Te quedaste en el minuto 00:00.</p>
+        <div class="dialog-actions">
+          <button class="ctrl-btn primary focusable" id="resumeContinueBtn">▶ Continuar</button>
+          <button class="ctrl-btn focusable" id="resumeRestartBtn">↺ Empezar desde el inicio</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="player-dialog" id="castDialog" onclick="event.stopPropagation()">
+      <div class="player-dialog-box">
+        <h3>Transmitir a la TV</h3>
+        <p id="castDialogText">Buscando televisores y Chromecast en tu red Wi-Fi...</p>
+        <div class="cast-device-list" id="castDeviceList"></div>
+        <div class="dialog-actions">
+          <button class="ctrl-btn primary focusable" id="castStopBtn" onclick="stopCasting()" style="display:none;">■ Dejar de transmitir</button>
+          <button class="ctrl-btn focusable" id="castMirrorBtn" onclick="openScreenMirroring()" style="display:none;">📱 Duplicar la pantalla</button>
+          <button class="ctrl-btn focusable" onclick="discoverCastDevices()">↻ Buscar de nuevo</button>
+          <button class="ctrl-btn focusable" onclick="closeCastDialog()">Cerrar</button>
         </div>
       </div>
     </div>
@@ -1212,7 +1436,7 @@
 
       document.getElementById("heroPlayBtn").onclick = () => {
         if (item.type === "movies" || !item.type) {
-          startDirectPlayback(item._id, item.title);
+          startDirectPlayback(item._id, item.title, { item });
         } else {
           openDetailModal(item);
         }
@@ -1326,7 +1550,7 @@
       document.getElementById("seriesSection").style.display = isSeries ? "block" : "none";
 
       document.getElementById("detailPlayBtn").onclick = () => {
-        startDirectPlayback(item._id, item.title);
+        startDirectPlayback(item._id, item.title, { item });
       };
 
       modal.classList.add("open");
@@ -1384,7 +1608,11 @@
               <div class="ep-meta">Temporada ${ep.season_number || seasonNum} • ${ep.runtime ? ep.runtime + " min" : "HD"}</div>
             </div>
           `;
-          const playEp = () => startDirectPlayback(ep._id, ep.title || `${currentDetailItem.title} - T${seasonNum}:E${epNum}`);
+          const seriesItem = currentDetailItem;
+          const playEp = () => {
+            const series = seriesContext(seriesItem, ep, seasonNum);
+            startDirectPlayback(ep._id, episodeTitle(series, ep), { series });
+          };
           card.addEventListener("click", playEp);
           card.addEventListener("keydown", (e) => {
             if (e.key === "Enter" || e.keyCode === 13 || e.keyCode === 23) {
@@ -1402,17 +1630,72 @@
     // =========================================================================
     // REPRODUCTOR DIRECTO MEMETFLIX (EXTRAE EL .M3U8 Y .VTT SIN ANUNCIOS)
     // =========================================================================
-    async function startDirectPlayback(postId, title) {
+    // currentPlayback = { postId, title, item, series, stream, nextEpisode, nextDismissed }
+    // series = { id, title, type, images, season, episode, episodeId }
+    let currentPlayback = null;
+    let playbackToken = 0;
+
+    function compactItem(item) {
+      if (!item) return null;
+      return {
+        _id: item._id,
+        title: item.title || "",
+        type: item.type || "movies",
+        images: { poster: (item.images && item.images.poster) || "", backdrop: (item.images && item.images.backdrop) || "" }
+      };
+    }
+
+    function seriesContext(seriesItem, ep, seasonNum) {
+      const base = compactItem(seriesItem) || {};
+      return {
+        id: base._id,
+        title: base.title,
+        type: base.type,
+        images: base.images,
+        season: Number(ep.season_number || seasonNum || 1),
+        episode: Number(ep.episode_number || 1),
+        episodeId: ep._id
+      };
+    }
+
+    function episodeTitle(series, ep) {
+      const label = `T${series.season}:E${series.episode}`;
+      const name = ep && ep.title ? ep.title : "";
+      return name ? `${series.title} - ${label} ${name}` : `${series.title} - ${label}`;
+    }
+
+    async function startDirectPlayback(postId, title, ctx) {
+      ctx = ctx || {};
+      const token = ++playbackToken;
       const overlay = document.getElementById("playerOverlay");
       const video = document.getElementById("memetflixVideo");
       const iframe = document.getElementById("fallbackIframe");
       const loader = document.getElementById("playerLoader");
 
+      // Guardar el avance del título anterior antes de cambiar (ej. al pasar al siguiente capítulo)
+      saveCurrentProgress(true);
+      hideNextEpisodeCard();
+
+      currentPlayback = {
+        postId: String(postId),
+        title: title || "Memetflix",
+        item: compactItem(ctx.item),
+        series: ctx.series || null,
+        stream: null,
+        localLoaded: false,
+        nextEpisode: null,
+        nextDismissed: false
+      };
+
       overlay.classList.add("open");
       loader.style.display = "block";
       document.getElementById("playerLoaderText").textContent = "Conectando con servidor HD sin anuncios...";
-      document.getElementById("playerTitle").textContent = title || "Memetflix";
+      document.getElementById("playerTitle").textContent = currentPlayback.title;
       document.getElementById("playerHud").classList.remove("hidden");
+      document.getElementById("castBtn").style.display = castSupported() ? "inline-block" : "none";
+      document.getElementById("currentTimeLabel").textContent = "00:00";
+      document.getElementById("durationLabel").textContent = "00:00";
+      seekSlider.value = 0;
 
       video.style.display = "block";
       iframe.style.display = "none";
@@ -1425,6 +1708,25 @@
       video.pause();
       video.removeAttribute("src");
       video.innerHTML = "";
+
+      if (currentPlayback.series) {
+        prefetchNextEpisode(currentPlayback, token);
+      }
+
+      // ¿Ya lo había empezado? Preguntar si continúa o reinicia
+      let startAt = 0;
+      const saved = getSavedProgress(postId);
+      if (saved && saved.t >= RESUME_MIN_SECONDS && !isFinished(saved.t, saved.d)) {
+        loader.style.display = "none";
+        const choice = await askResume(saved.t);
+        if (token !== playbackToken) return;
+        if (choice === null) {
+          closePlayer();
+          return;
+        }
+        startAt = choice;
+        loader.style.display = "block";
+      }
 
       try {
         let streamData = null;
@@ -1440,9 +1742,21 @@
             }, 40);
           });
         }
+        if (token !== playbackToken) return;
 
         if (streamData && streamData.m3u8) {
-          playHlsStream(streamData.m3u8, streamData.subtitles || []);
+          currentPlayback.stream = {
+            m3u8: streamData.m3u8,
+            poster: streamData.poster || "",
+            subtitles: streamData.subtitles || []
+          };
+          if (isCasting()) {
+            // Ya se está transmitiendo: el siguiente título también va a la TV
+            loader.style.display = "none";
+            castCurrentStream(castState.deviceId, castState.deviceName, startAt);
+          } else {
+            playHlsStream(streamData.m3u8, streamData.subtitles || [], startAt);
+          }
         } else if (streamData && streamData.embedUrl) {
           // Fallback en caso de que un servidor específico no sea vimeos HLS
           loader.style.display = "none";
@@ -1460,12 +1774,14 @@
       }
     }
 
-    function playHlsStream(m3u8Url, subtitles) {
+    function playHlsStream(m3u8Url, subtitles, startAt) {
       const video = document.getElementById("memetflixVideo");
       const loader = document.getElementById("playerLoader");
       const audioSelect = document.getElementById("audioTrackSelect");
       const subSelect = document.getElementById("subtitleSelect");
       const qualSelect = document.getElementById("qualitySelect");
+      const startPosition = startAt > 0 ? startAt : -1;
+      if (currentPlayback) currentPlayback.localLoaded = true;
 
       audioSelect.style.display = "none";
       subSelect.style.display = "none";
@@ -1499,7 +1815,8 @@
       if (window.Hls && Hls.isSupported()) {
         hlsInstance = new Hls({
           enableWorker: true,
-          maxBufferLength: 30
+          maxBufferLength: 30,
+          startPosition: startPosition
         });
         hlsInstance.loadSource(m3u8Url);
         hlsInstance.attachMedia(video);
@@ -1564,6 +1881,7 @@
         video.src = m3u8Url;
         video.addEventListener("loadedmetadata", () => {
           loader.style.display = "none";
+          if (startAt > 0) video.currentTime = startAt;
           video.play().catch(() => {});
         }, { once: true });
       }
@@ -1594,6 +1912,11 @@
     }
 
     function togglePlayPause() {
+      if (isCasting()) {
+        castControl(castState.state === "paused" ? "play" : "pause", 0);
+        scheduleHideHud();
+        return;
+      }
       const video = document.getElementById("memetflixVideo");
       if (video.paused) {
         video.play();
@@ -1604,6 +1927,13 @@
     }
 
     function seekRelative(seconds) {
+      if (isCasting()) {
+        const target = Math.max(0, Math.min(castState.duration || 0, (castState.position || 0) + seconds));
+        castState.position = target;
+        castControl("seek", target);
+        scheduleHideHud();
+        return;
+      }
       const video = document.getElementById("memetflixVideo");
       video.currentTime = Math.max(0, Math.min(video.duration || 0, video.currentTime + seconds));
       scheduleHideHud();
@@ -1613,6 +1943,15 @@
       const overlay = document.getElementById("playerOverlay");
       const video = document.getElementById("memetflixVideo");
       const iframe = document.getElementById("fallbackIframe");
+      saveCurrentProgress(true);
+      playbackToken++;
+      resolveResume(null);
+      hideNextEpisodeCard();
+      closeCastDialog();
+      if (isCasting()) {
+        castControl("stop", 0);
+        endCastUi();
+      }
       video.pause();
       if (hlsInstance) {
         hlsInstance.destroy();
@@ -1621,6 +1960,8 @@
       video.removeAttribute("src");
       iframe.src = "about:blank";
       overlay.classList.remove("open");
+      currentPlayback = null;
+      renderContinueRow();
     }
 
     function formatTime(sec) {
@@ -1636,26 +1977,60 @@
     const videoEl = document.getElementById("memetflixVideo");
     const seekSlider = document.getElementById("seekSlider");
 
+    function updateTimeUi(time, duration) {
+      document.getElementById("currentTimeLabel").textContent = formatTime(time);
+      document.getElementById("durationLabel").textContent = formatTime(duration);
+      if (duration > 0) {
+        seekSlider.value = (time / duration) * 100;
+      }
+    }
+
+    // Se llama con cada avance del video local o de la TV
+    function onPlaybackTick(time, duration) {
+      updateTimeUi(time, duration);
+      recordProgress(time, duration, false);
+      maybeShowNextEpisode(time, duration);
+    }
+
     videoEl.addEventListener("play", () => {
       document.getElementById("playPauseBtn").textContent = "⏸ Pausa";
     });
     videoEl.addEventListener("pause", () => {
       document.getElementById("playPauseBtn").textContent = "▶ Play";
+      if (!isCasting()) saveCurrentProgress(true);
     });
     videoEl.addEventListener("timeupdate", () => {
-      document.getElementById("currentTimeLabel").textContent = formatTime(videoEl.currentTime);
-      document.getElementById("durationLabel").textContent = formatTime(videoEl.duration);
-      if (videoEl.duration > 0) {
-        seekSlider.value = (videoEl.currentTime / videoEl.duration) * 100;
-      }
+      if (isCasting()) return;
+      onPlaybackTick(videoEl.currentTime, videoEl.duration);
+    });
+    videoEl.addEventListener("ended", () => {
+      if (isCasting()) return;
+      onPlaybackEnded();
     });
 
     seekSlider.addEventListener("input", (e) => {
-      if (videoEl.duration > 0) {
+      if (isCasting()) {
+        if (castState.duration > 0) {
+          document.getElementById("currentTimeLabel").textContent =
+            formatTime((parseFloat(e.target.value) / 100) * castState.duration);
+        }
+      } else if (videoEl.duration > 0) {
         videoEl.currentTime = (parseFloat(e.target.value) / 100) * videoEl.duration;
       }
       scheduleHideHud();
     });
+    seekSlider.addEventListener("change", (e) => {
+      if (isCasting() && castState.duration > 0) {
+        const target = (parseFloat(e.target.value) / 100) * castState.duration;
+        castState.position = target;
+        castControl("seek", target);
+      }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") saveCurrentProgress(true);
+    });
+    window.addEventListener("pagehide", () => saveCurrentProgress(true));
 
     function onPlayerTap(e) {
       const hud = document.getElementById("playerHud");
@@ -1672,10 +2047,508 @@
       hud.classList.remove("hidden");
       clearTimeout(hudTimeout);
       hudTimeout = setTimeout(() => {
-        if (!videoEl.paused) {
+        // Mientras se transmite el HUD se queda visible: es el control remoto de la TV
+        if (!videoEl.paused && !isCasting()) {
           hud.classList.add("hidden");
         }
       }, 4000);
+    }
+
+    // =========================================================================
+    // CONTINUAR VIENDO: se guarda el minuto de cada película / capítulo
+    // =========================================================================
+    const PROGRESS_KEY = "memetflix_progress_v1";
+    const RESUME_MIN_SECONDS = 30;
+    const MAX_PROGRESS_ENTRIES = 60;
+    let lastProgressSave = 0;
+    let resumeResolver = null;
+
+    function loadProgressMap() {
+      try {
+        return JSON.parse(localStorage.getItem(PROGRESS_KEY) || "{}") || {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveProgressMap(map) {
+      const keys = Object.keys(map);
+      if (keys.length > MAX_PROGRESS_ENTRIES) {
+        keys.sort((a, b) => (map[b].updated || 0) - (map[a].updated || 0))
+          .slice(MAX_PROGRESS_ENTRIES)
+          .forEach(k => delete map[k]);
+      }
+      try {
+        localStorage.setItem(PROGRESS_KEY, JSON.stringify(map));
+      } catch (e) {}
+    }
+
+    function getSavedProgress(postId) {
+      return loadProgressMap()[String(postId)] || null;
+    }
+
+    // Últimos segundos (créditos): ahí se sugiere el siguiente capítulo y el título cuenta como visto
+    function creditsWindow(duration) {
+      return duration >= 600 ? 60 : 20;
+    }
+
+    function isFinished(time, duration) {
+      return duration > 0 && duration - time <= creditsWindow(duration);
+    }
+
+    function recordProgress(time, duration, force) {
+      const pb = currentPlayback;
+      if (!pb || !pb.stream || !(duration > 0) || !Number.isFinite(time)) return;
+      const now = Date.now();
+      if (!force && now - lastProgressSave < 5000) return;
+      lastProgressSave = now;
+
+      const map = loadProgressMap();
+      if (isFinished(time, duration)) {
+        delete map[pb.postId];
+        // Dejar el siguiente capítulo listo en "Continuar viendo"
+        const next = pb.nextEpisode;
+        if (pb.series && next && !map[String(next.ep._id)]) {
+          map[String(next.ep._id)] = {
+            t: 0,
+            d: 0,
+            title: next.title,
+            series: next.series,
+            updated: now
+          };
+        }
+      } else if (time >= 5) {
+        map[pb.postId] = {
+          t: Math.floor(time),
+          d: Math.floor(duration),
+          title: pb.title,
+          item: pb.item,
+          series: pb.series,
+          updated: now
+        };
+      } else {
+        return;
+      }
+      saveProgressMap(map);
+    }
+
+    function saveCurrentProgress(force) {
+      if (!currentPlayback) return;
+      if (isCasting()) {
+        recordProgress(castState.position || 0, castState.duration || 0, force);
+      } else if (videoEl.duration > 0) {
+        recordProgress(videoEl.currentTime, videoEl.duration, force);
+      }
+    }
+
+    // Devuelve el segundo desde el que arrancar (0 = inicio) o null si se cerró el reproductor
+    function askResume(savedSeconds) {
+      const dialog = document.getElementById("resumeDialog");
+      const continueBtn = document.getElementById("resumeContinueBtn");
+      const restartBtn = document.getElementById("resumeRestartBtn");
+      document.getElementById("resumeDialogText").textContent =
+        `Te quedaste en el minuto ${formatTime(savedSeconds)}.`;
+      continueBtn.textContent = `▶ Continuar desde ${formatTime(savedSeconds)}`;
+      dialog.classList.add("open");
+      setTimeout(() => continueBtn.focus(), 50);
+      return new Promise(resolve => {
+        resumeResolver = resolve;
+        continueBtn.onclick = () => resolveResume(savedSeconds);
+        restartBtn.onclick = () => resolveResume(0);
+      });
+    }
+
+    function resolveResume(value) {
+      document.getElementById("resumeDialog").classList.remove("open");
+      if (resumeResolver) {
+        const r = resumeResolver;
+        resumeResolver = null;
+        r(value);
+      }
+    }
+
+    function renderContinueRow() {
+      const section = document.getElementById("continueSection");
+      const row = document.getElementById("row-continue");
+      const map = loadProgressMap();
+      const seen = new Set();
+      const entries = Object.keys(map)
+        .map(id => Object.assign({ id }, map[id]))
+        .sort((a, b) => (b.updated || 0) - (a.updated || 0))
+        .filter(entry => {
+          // Una sola tarjeta por serie: el último capítulo que se vio
+          const key = entry.series ? "s:" + entry.series.id : "m:" + entry.id;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return entry.series || entry.item;
+        })
+        .slice(0, 18);
+
+      row.innerHTML = "";
+      section.style.display = entries.length ? "block" : "none";
+      entries.forEach(entry => row.appendChild(createContinueCard(entry)));
+    }
+
+    function createContinueCard(entry) {
+      const card = document.createElement("div");
+      card.className = "card focusable";
+      card.tabIndex = 0;
+
+      const media = entry.series || entry.item;
+      const posterUrl = getImageUrl(media.images && media.images.poster);
+      const pct = entry.d > 0 ? Math.min(100, Math.round((entry.t / entry.d) * 100)) : 0;
+      let sub;
+      if (entry.series) {
+        sub = `T${entry.series.season}:E${entry.series.episode}`;
+        sub += entry.t > 0 && entry.d > 0 ? ` • quedan ${Math.max(1, Math.round((entry.d - entry.t) / 60))} min` : " • Siguiente";
+      } else {
+        sub = entry.d > 0 ? `Quedan ${Math.max(1, Math.round((entry.d - entry.t) / 60))} min` : "Continuar";
+      }
+
+      card.innerHTML = `
+        <div class="card-poster-wrap">
+          <img class="card-poster" src="${posterUrl}" loading="lazy" onerror="this.style.opacity='0.2'" alt="" />
+          <span class="card-type">${typeLabel(media.type)}</span>
+          <div class="card-progress"><span style="width:${pct}%"></span></div>
+        </div>
+        <div class="card-body">
+          <div class="card-title"></div>
+          <div class="card-sub"></div>
+        </div>
+      `;
+      card.querySelector(".card-title").textContent = media.title || entry.title || "Sin título";
+      card.querySelector(".card-sub").textContent = sub;
+
+      const openFn = () => startDirectPlayback(entry.id, entry.title, entry.series ? { series: entry.series } : { item: entry.item });
+      card.addEventListener("click", openFn);
+      card.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.keyCode === 13 || e.keyCode === 23) {
+          e.preventDefault();
+          openFn();
+        }
+      });
+      return card;
+    }
+
+    // =========================================================================
+    // SIGUIENTE CAPÍTULO (series y anime)
+    // =========================================================================
+    let nextEpisodeCountdown = null;
+
+    function sortEpisodes(posts) {
+      return (Array.isArray(posts) ? posts.slice() : [])
+        .sort((a, b) => Number(a.episode_number || 0) - Number(b.episode_number || 0));
+    }
+
+    async function fetchSeason(seriesId, seasonNum) {
+      const res = await apiGet(`${FAST_API}/single/episodes/list?_id=${seriesId}&season=${seasonNum}&page=1&postsPerPage=50`);
+      const data = (res && res.data) || {};
+      return {
+        posts: sortEpisodes(data.posts),
+        seasons: (Array.isArray(data.seasons) ? data.seasons : []).map(Number).sort((a, b) => a - b)
+      };
+    }
+
+    async function findNextEpisode(series) {
+      const current = await fetchSeason(series.id, series.season);
+      const idx = current.posts.findIndex(p => String(p._id) === String(series.episodeId));
+      let ep = idx >= 0
+        ? current.posts[idx + 1]
+        : current.posts.find(p => Number(p.episode_number) > Number(series.episode));
+      let season = series.season;
+      if (!ep) {
+        const nextSeason = current.seasons.find(s => s > Number(series.season));
+        if (nextSeason === undefined) return null;
+        const following = await fetchSeason(series.id, nextSeason);
+        ep = following.posts[0];
+        season = nextSeason;
+      }
+      if (!ep) return null;
+      const nextSeries = Object.assign({}, series, {
+        season: Number(ep.season_number || season),
+        episode: Number(ep.episode_number || 1),
+        episodeId: ep._id
+      });
+      return { ep, series: nextSeries, title: episodeTitle(nextSeries, ep) };
+    }
+
+    async function prefetchNextEpisode(pb, token) {
+      try {
+        const next = await findNextEpisode(pb.series);
+        if (token === playbackToken && currentPlayback === pb) pb.nextEpisode = next;
+      } catch (e) {
+        console.warn("No se pudo buscar el siguiente capítulo", e);
+      }
+    }
+
+    function maybeShowNextEpisode(time, duration) {
+      const pb = currentPlayback;
+      if (!pb || !pb.nextEpisode || pb.nextDismissed) return;
+      const card = document.getElementById("nextEpisodeCard");
+      if (isFinished(time, duration)) {
+        if (!card.classList.contains("open")) {
+          document.getElementById("nextEpisodeTitle").textContent = pb.nextEpisode.title;
+          document.getElementById("nextEpisodePlayBtn").textContent = "▶ Reproducir";
+          card.classList.add("open");
+          scheduleHideHud();
+          setTimeout(() => document.getElementById("nextEpisodePlayBtn").focus(), 50);
+        }
+      } else if (card.classList.contains("open") && !nextEpisodeCountdown) {
+        // Retrocedió antes de los créditos
+        card.classList.remove("open");
+      }
+    }
+
+    // Al terminar el capítulo arranca el siguiente solo, salvo que el usuario lo haya descartado
+    function onPlaybackEnded() {
+      saveCurrentProgress(true);
+      const pb = currentPlayback;
+      if (!pb || !pb.nextEpisode || pb.nextDismissed || nextEpisodeCountdown) return;
+      document.getElementById("nextEpisodeTitle").textContent = pb.nextEpisode.title;
+      document.getElementById("nextEpisodeCard").classList.add("open");
+      let remaining = 5;
+      const btn = document.getElementById("nextEpisodePlayBtn");
+      btn.textContent = `▶ Siguiente en ${remaining}`;
+      clearInterval(nextEpisodeCountdown);
+      nextEpisodeCountdown = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          playNextEpisode();
+        } else {
+          btn.textContent = `▶ Siguiente en ${remaining}`;
+        }
+      }, 1000);
+    }
+
+    function playNextEpisode() {
+      const pb = currentPlayback;
+      hideNextEpisodeCard();
+      if (!pb || !pb.nextEpisode) return;
+      const next = pb.nextEpisode;
+      startDirectPlayback(next.ep._id, next.title, { series: next.series });
+    }
+
+    function dismissNextEpisode() {
+      if (currentPlayback) currentPlayback.nextDismissed = true;
+      hideNextEpisodeCard();
+    }
+
+    function hideNextEpisodeCard() {
+      clearInterval(nextEpisodeCountdown);
+      nextEpisodeCountdown = null;
+      document.getElementById("nextEpisodeCard").classList.remove("open");
+    }
+
+    // =========================================================================
+    // TRANSMITIR A LA TV (Chromecast / Smart TV DLNA)
+    // El puente nativo busca los equipos en la red Wi-Fi y les manda el stream.
+    // Avisos de vuelta: window.__onCastDevices(lista) y window.__onCastStatus(estado)
+    // =========================================================================
+    let castDevices = [];
+    // castState = { deviceId, deviceName, state, position, duration }
+    let castState = null;
+
+    function castSupported() {
+      return !!(window.MemetflixNative && typeof window.MemetflixNative.castDiscover === "function");
+    }
+
+    function isCasting() {
+      return !!castState;
+    }
+
+    function openCastDialog() {
+      const dialog = document.getElementById("castDialog");
+      const mirrorBtn = document.getElementById("castMirrorBtn");
+      mirrorBtn.style.display =
+        window.MemetflixNative && typeof window.MemetflixNative.openScreenMirroring === "function" ? "block" : "none";
+      document.getElementById("castStopBtn").style.display = isCasting() ? "block" : "none";
+      dialog.classList.add("open");
+      renderCastDevices();
+      discoverCastDevices();
+    }
+
+    function closeCastDialog() {
+      document.getElementById("castDialog").classList.remove("open");
+    }
+
+    function discoverCastDevices() {
+      castDevices = [];
+      renderCastDevices(true);
+      try {
+        window.MemetflixNative.castDiscover();
+      } catch (e) {
+        document.getElementById("castDialogText").textContent = "No se pudo buscar televisores.";
+      }
+    }
+
+    window.__onCastDevices = function (list) {
+      castDevices = Array.isArray(list) ? list : [];
+      renderCastDevices(false);
+    };
+
+    function renderCastDevices(searching) {
+      const listEl = document.getElementById("castDeviceList");
+      const text = document.getElementById("castDialogText");
+      const desktop = window.MemetflixNative && window.MemetflixNative.platform === "desktop";
+      listEl.innerHTML = "";
+      if (isCasting()) {
+        text.textContent = `Transmitiendo en ${castState.deviceName}.`;
+      } else if (castDevices.length === 0) {
+        text.textContent = searching !== false
+          ? "Buscando televisores y Chromecast en tu red Wi-Fi..."
+          : "No se encontró ninguna TV. Revisa que esté encendida y en la misma red Wi-Fi."
+            + (desktop ? " También puedes duplicar la pantalla de Windows con Win + K." : "");
+      } else {
+        text.textContent = "Elige la TV:";
+      }
+      castDevices.forEach(dev => {
+        const btn = document.createElement("button");
+        btn.className = "ctrl-btn focusable";
+        const kind = dev.type === "chromecast" ? "Chromecast" : "Smart TV (DLNA)";
+        btn.innerHTML = `📺 <span></span><span class="cast-device-kind">${kind}</span>`;
+        btn.querySelector("span").textContent = dev.name;
+        btn.onclick = () => selectCastDevice(dev);
+        listEl.appendChild(btn);
+      });
+      const first = listEl.querySelector("button");
+      const dialog = document.getElementById("castDialog");
+      if (first && dialog.classList.contains("open") && !listEl.contains(document.activeElement)) first.focus();
+    }
+
+    function selectCastDevice(dev) {
+      const pb = currentPlayback;
+      if (!pb || !pb.stream) {
+        showToast("Este video no se puede transmitir");
+        return;
+      }
+      closeCastDialog();
+      const startAt = videoEl.duration > 0 ? videoEl.currentTime : 0;
+      castCurrentStream(dev.id, dev.name, startAt);
+    }
+
+    function castCurrentStream(deviceId, deviceName, startAt) {
+      const pb = currentPlayback;
+      if (!pb || !pb.stream) return;
+      const wasCasting = isCasting();
+      videoEl.pause();
+      castState = {
+        deviceId,
+        deviceName,
+        state: "connecting",
+        position: startAt || 0,
+        // Con un capítulo nuevo la duración llega desde la TV
+        duration: wasCasting ? 0 : (videoEl.duration || 0)
+      };
+      const art = pb.series || pb.item;
+      const subs = (pb.stream.subtitles || []).filter(s => s.file && !s.file.includes("empty.srt"));
+      const media = {
+        url: pb.stream.m3u8,
+        title: pb.title,
+        poster: pb.stream.poster || (art && art.images ? getImageUrl(art.images.poster) : ""),
+        subtitles: subs,
+        startTime: Math.floor(startAt || 0)
+      };
+      showCastUi();
+      try {
+        window.MemetflixNative.castStart(String(deviceId), JSON.stringify(media));
+      } catch (e) {
+        showToast("No se pudo transmitir a la TV");
+        endCastUi();
+      }
+    }
+
+    function castControl(action, value) {
+      try {
+        window.MemetflixNative.castControl(action, Number(value) || 0);
+      } catch (e) {}
+    }
+
+    function stopCasting() {
+      closeCastDialog();
+      if (!isCasting()) return;
+      const resumeAt = castState.position || 0;
+      castControl("stop", 0);
+      endCastUi();
+      resumeLocalPlayback(resumeAt);
+    }
+
+    // De vuelta en el celular/PC desde donde iba la TV
+    function resumeLocalPlayback(resumeAt) {
+      const pb = currentPlayback;
+      if (!pb || !pb.stream) return;
+      if (pb.localLoaded) {
+        if (resumeAt > 0) videoEl.currentTime = resumeAt;
+        videoEl.play().catch(() => {});
+      } else {
+        document.getElementById("playerLoader").style.display = "block";
+        playHlsStream(pb.stream.m3u8, pb.stream.subtitles, resumeAt);
+      }
+    }
+
+    function showCastUi() {
+      const pb = currentPlayback;
+      const banner = document.getElementById("castBanner");
+      const media = pb && (pb.series || pb.item);
+      const bg = media && media.images ? getImageUrl(media.images.backdrop || media.images.poster, true) : "";
+      banner.style.backgroundImage = bg ? `url('${bg}')` : "none";
+      document.getElementById("castBannerTitle").textContent = `Transmitiendo en ${castState.deviceName}`;
+      document.getElementById("castBannerSub").textContent = "Conectando con la TV...";
+      document.getElementById("castBtn").textContent = "📺 " + castState.deviceName;
+      banner.classList.add("open");
+      videoEl.style.visibility = "hidden";
+      scheduleHideHud();
+    }
+
+    function endCastUi() {
+      castState = null;
+      document.getElementById("castBanner").classList.remove("open");
+      document.getElementById("castBtn").textContent = "📺 Transmitir";
+      videoEl.style.visibility = "visible";
+    }
+
+    const CAST_STATE_TEXT = {
+      connecting: "Conectando con la TV...",
+      buffering: "Cargando en la TV...",
+      playing: "Reproduciendo en la TV",
+      paused: "En pausa"
+    };
+
+    window.__onCastStatus = function (status) {
+      if (!castState || !status) return;
+      if (status.deviceId && String(status.deviceId) !== String(castState.deviceId)) return;
+      const state = status.state;
+
+      if (state === "error" || state === "stopped") {
+        const resumeAt = castState.position || 0;
+        saveCurrentProgress(true);
+        endCastUi();
+        if (state === "error") showToast(status.message || "Se perdió la conexión con la TV");
+        resumeLocalPlayback(resumeAt);
+        return;
+      }
+
+      castState.state = state;
+      if (Number.isFinite(status.position)) castState.position = status.position;
+      if (status.duration > 0) castState.duration = status.duration;
+
+      document.getElementById("castBannerSub").textContent = CAST_STATE_TEXT[state] || "";
+      document.getElementById("playPauseBtn").textContent = state === "paused" ? "▶ Play" : "⏸ Pausa";
+
+      if (state === "ended") {
+        document.getElementById("castBannerSub").textContent = "Terminó en la TV";
+        onPlaybackEnded();
+        return;
+      }
+      onPlaybackTick(castState.position, castState.duration);
+    };
+
+    function openScreenMirroring() {
+      closeCastDialog();
+      try {
+        if (window.MemetflixNative.openScreenMirroring() !== "ok") {
+          showToast("Abre \"Transmitir pantalla\" o \"Smart View\" desde los ajustes rápidos");
+        }
+      } catch (e) {}
     }
 
     // Autenticación de Usuario (/wp-json/wpf/v1/auth/login)
@@ -1748,6 +2621,10 @@
 
     // Manejo global del botón Atrás (llamado desde Android MainActivity)
     window.__handleAndroidBack = function () {
+      if (document.getElementById("castDialog").classList.contains("open")) {
+        closeCastDialog();
+        return true;
+      }
       if (document.getElementById("playerOverlay").classList.contains("open")) {
         closePlayer();
         return true;
@@ -1769,6 +2646,7 @@
 
     // Inicialización
     updateAccountUi();
+    renderContinueRow();
     loadHomeCatalog();
   </script>
 </body>

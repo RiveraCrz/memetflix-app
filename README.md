@@ -14,6 +14,12 @@ Aplicación nativa ligera para **Android TV / Google TV / Fire TV**, **Tablets**
   - Reproduce el flujo directamente con `hls.js` sin cargar anuncios ni bloqueos anti-AdBlock.
 - **Selector de Audio, Subtítulos y Calidad en Vivo**:
   - Cambio instantáneo entre pistas de audio (**Español Latino**, **Inglés**, **Japonés**, etc.), subtítulos en español y resoluciones HD.
+- **Continuar viendo**:
+  - Guarda el minuto de cada película o capítulo y, al volver a abrirlo, pregunta si continuar o empezar desde el inicio. En Inicio aparece la fila **Continuar viendo**.
+- **Siguiente capítulo**:
+  - En series y anime, durante los créditos sugiere el siguiente capítulo (pasa también a la siguiente temporada) y lo reproduce solo al terminar.
+- **Transmitir a la TV**:
+  - Botón **📺 Transmitir** en el reproductor: envía el video a **Chromecast / Google TV** (protocolo Cast) o a **Smart TV DLNA** (Samsung, LG, Sony...) en la misma red Wi-Fi, sin librerías externas (`CastManager.java`). En el celular también ofrece **Duplicar la pantalla**.
 - **Soporte Oficial para Android TV (`LEANBACK_LAUNCHER`)**:
   - Incluye banner oficial `320x180dp` (`tv_banner.png`) e íconos adaptativos para aparecer directamente en el launcher principal del televisor.
 
@@ -29,6 +35,7 @@ También hay versión de escritorio para Windows en [`desktop/`](./desktop/READM
 ## 🛠️ Estructura del Proyecto
 
 - `app/src/main/java/com/memetflix/tv/MainActivity.java`: Actividad principal en modo pantalla completa inmersiva, puente nativo `@JavascriptInterface` (`MemetflixBridge`), desempacador de streams HLS y cursor virtual para TV.
+- `app/src/main/java/com/memetflix/tv/CastManager.java`: Búsqueda de TVs (mDNS / SSDP), sesiones Chromecast y DLNA, y proxy HTTP local que le sirve el video a la TV.
 - `app/src/main/assets/memetflix.html`: Interfaz de usuario responsiva de Memetflix y reproductor HLS personalizado.
 - `desktop/`: App de escritorio (Electron) que reutiliza `memetflix.html` y reimplementa el puente nativo en `main.js`.
 - `app/src/main/AndroidManifest.xml`: Configuración de permisos y `intent-filter` para `LAUNCHER` (móvil/tablet) y `LEANBACK_LAUNCHER` (Android TV).

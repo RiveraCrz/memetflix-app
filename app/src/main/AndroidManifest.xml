@@ -6,6 +6,10 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <!-- Transmitir a la TV: buscar Chromecast / Smart TV en la red Wi-Fi -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+
     <!-- Compatible tanto con Android TV / Google TV como con Tablets y Móviles -->
     <uses-feature
         android:name="android.software.leanback"

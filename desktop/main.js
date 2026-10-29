@@ -2,6 +2,7 @@
 // y reemplaza el puente Java `MemetflixNative` con el proceso principal de Electron.
 const { app, BrowserWindow, ipcMain, net, session, Menu } = require("electron");
 const path = require("path");
+const { CastManager } = require("./cast");
 
 const WEB_HOME_URL = "https://lamovie.la/";
 const UA_DESKTOP =
@@ -153,6 +154,17 @@ async function resolveVideoStream(postId) {
   }
 }
 
+let castManager = null;
+
+// Avisos para la interfaz: window.__onCastDevices(lista) / window.__onCastStatus(estado)
+function sendToUi(fn, data) {
+  for (const win of BrowserWindow.getAllWindows()) {
+    win.webContents
+      .executeJavaScript(`window.${fn} && window.${fn}(${JSON.stringify(data)})`)
+      .catch(() => {});
+  }
+}
+
 // El HTML llama al puente de forma síncrona (como @JavascriptInterface en Android),
 // así que respondemos por sendSync rellenando event.returnValue.
 function registerBridge() {
@@ -164,6 +176,21 @@ function registerBridge() {
   });
   ipcMain.on("native:resolveVideoStream", async (event, postId) => {
     event.returnValue = await resolveVideoStream(String(postId));
+  });
+
+  // Transmitir a la TV (asíncrono: las respuestas llegan por sendToUi)
+  castManager = new CastManager({
+    onDevices: (list) => sendToUi("__onCastDevices", list),
+    onStatus: (status) => sendToUi("__onCastStatus", status)
+  });
+  ipcMain.on("native:castDiscover", () => {
+    castManager.discover();
+  });
+  ipcMain.on("native:castStart", (_event, deviceId, mediaJson) => {
+    castManager.start(String(deviceId), String(mediaJson));
+  });
+  ipcMain.on("native:castControl", (_event, action, value) => {
+    castManager.control(String(action), Number(value) || 0);
   });
 }
 
@@ -266,6 +293,10 @@ if (!app.requestSingleInstanceLock()) {
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
+  });
+
+  app.on("before-quit", () => {
+    if (castManager) castManager.release();
   });
 
   app.on("window-all-closed", () => {
