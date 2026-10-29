@@ -15,7 +15,7 @@ Aplicación nativa ligera para **Android TV / Google TV / Fire TV**, **Tablets**
 - **Selector de Audio, Subtítulos y Calidad en Vivo**:
   - Cambio instantáneo entre pistas de audio (**Español Latino**, **Inglés**, **Japonés**, etc.), subtítulos en español y resoluciones HD.
 - **Continuar viendo**:
-  - Guarda el minuto de cada película o capítulo y, al volver a abrirlo, pregunta si continuar o empezar desde el inicio. En Inicio aparece la fila **Continuar viendo**.
+  - Guarda el minuto de cada película o capítulo y, al volver a abrirlo, pregunta si continuar o empezar desde el inicio. En Inicio aparece la fila **Continuar viendo** y en el menú la sección **Seguir viendo** con todo lo que quedó a medias (se puede quitar cada título).
 - **Siguiente capítulo**:
   - En series y anime, durante los créditos sugiere el siguiente capítulo (pasa también a la siguiente temporada) y lo reproduce solo al terminar.
 - **Transmitir a la TV**:

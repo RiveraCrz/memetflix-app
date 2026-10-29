@@ -844,6 +844,18 @@
       background: var(--red);
     }
 
+    .card-remove {
+      margin-top: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
     /* Diálogos dentro del reproductor (continuar / transmitir) */
     .player-dialog {
       position: absolute;
@@ -1049,6 +1061,7 @@
       <button class="nav-btn focusable" id="tab-movies" onclick="switchTab('movies')">Películas</button>
       <button class="nav-btn focusable" id="tab-tvshows" onclick="switchTab('tvshows')">Series</button>
       <button class="nav-btn focusable" id="tab-animes" onclick="switchTab('animes')">Anime</button>
+      <button class="nav-btn focusable" id="tab-watching" onclick="switchTab('watching')">Seguir viendo</button>
     </nav>
 
     <div class="nav-actions">
@@ -1083,6 +1096,7 @@
       <section class="section" id="continueSection" style="display:none;">
         <div class="section-header">
           <h2 class="section-title">Continuar viendo</h2>
+          <button class="nav-btn focusable" onclick="switchTab('watching')">Ver todo →</button>
         </div>
         <div class="row-scroll" id="row-continue"></div>
       </section>
@@ -1126,6 +1140,19 @@
         <div class="load-more-wrap">
           <button class="btn-primary focusable" id="loadMoreBtn" onclick="loadMoreCatalog()">Cargar más títulos</button>
         </div>
+      </section>
+    </div>
+
+    <!-- Vista Seguir viendo: todo lo que el usuario dejó a medias -->
+    <div id="view-watching" style="display:none;">
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title">Seguir viendo</h2>
+        </div>
+        <div class="grid-catalog" id="watchingGrid"></div>
+        <p id="watchingEmpty" style="display:none; color:var(--text-muted); padding:24px 0;">
+          Aquí aparecerán las películas y capítulos que dejes a medias.
+        </p>
       </section>
     </div>
   </main>
@@ -1456,9 +1483,14 @@
       const activeBtn = document.getElementById("tab-" + tab);
       if (activeBtn) activeBtn.classList.add("active");
 
+      document.getElementById("view-watching").style.display = tab === "watching" ? "block" : "none";
       if (tab === "home") {
         document.getElementById("view-home").style.display = "block";
         document.getElementById("view-catalog").style.display = "none";
+      } else if (tab === "watching") {
+        document.getElementById("view-home").style.display = "none";
+        document.getElementById("view-catalog").style.display = "none";
+        renderContinueRow();
       } else {
         document.getElementById("view-home").style.display = "none";
         document.getElementById("view-catalog").style.display = "block";
@@ -2167,9 +2199,8 @@
       }
     }
 
-    function renderContinueRow() {
-      const section = document.getElementById("continueSection");
-      const row = document.getElementById("row-continue");
+    // Lo que se está viendo: una entrada por película y una por serie (el último capítulo)
+    function continueEntries() {
       const map = loadProgressMap();
       const seen = new Set();
       const entries = Object.keys(map)
@@ -2181,15 +2212,36 @@
           if (seen.has(key)) return false;
           seen.add(key);
           return entry.series || entry.item;
-        })
-        .slice(0, 18);
-
-      row.innerHTML = "";
-      section.style.display = entries.length ? "block" : "none";
-      entries.forEach(entry => row.appendChild(createContinueCard(entry)));
+        });
+      return entries;
     }
 
-    function createContinueCard(entry) {
+    function renderContinueRow() {
+      const entries = continueEntries();
+      const row = document.getElementById("row-continue");
+      row.innerHTML = "";
+      document.getElementById("continueSection").style.display = entries.length ? "block" : "none";
+      entries.slice(0, 18).forEach(entry => row.appendChild(createContinueCard(entry)));
+
+      const grid = document.getElementById("watchingGrid");
+      grid.innerHTML = "";
+      document.getElementById("watchingEmpty").style.display = entries.length ? "none" : "block";
+      entries.forEach(entry => grid.appendChild(createContinueCard(entry, true)));
+    }
+
+    // Quita la película, o todos los capítulos guardados de la serie
+    function removeFromWatching(entry) {
+      const map = loadProgressMap();
+      Object.keys(map).forEach(id => {
+        const e = map[id];
+        if (entry.series ? (e.series && e.series.id === entry.series.id) : id === entry.id) delete map[id];
+      });
+      saveProgressMap(map);
+      renderContinueRow();
+      showToast("Quitado de Seguir viendo");
+    }
+
+    function createContinueCard(entry, removable) {
       const card = document.createElement("div");
       card.className = "card focusable";
       card.tabIndex = 0;
@@ -2218,6 +2270,17 @@
       `;
       card.querySelector(".card-title").textContent = media.title || entry.title || "Sin título";
       card.querySelector(".card-sub").textContent = sub;
+      if (removable) {
+        const removeBtn = document.createElement("button");
+        removeBtn.className = "card-remove focusable";
+        removeBtn.textContent = "✕ Quitar";
+        removeBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          removeFromWatching(entry);
+        });
+        removeBtn.addEventListener("keydown", (e) => e.stopPropagation());
+        card.querySelector(".card-body").appendChild(removeBtn);
+      }
 
       const openFn = () => startDirectPlayback(entry.id, entry.title, entry.series ? { series: entry.series } : { item: entry.item });
       card.addEventListener("click", openFn);
