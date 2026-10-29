@@ -1,0 +1,53 @@
+{
+  "name": "memetflix-desktop",
+  "productName": "Memetflix",
+  "version": "1.0.0",
+  "description": "Memetflix para Windows",
+  "main": "main.js",
+  "author": "Memetflix",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis portable"
+  },
+  "devDependencies": {
+    "electron": "44.5.0",
+    "electron-builder": "26.17.0"
+  },
+  "build": {
+    "appId": "com.memetflix.desktop",
+    "publish": null,
+    "productName": "Memetflix",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "build/icon.png",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../app/src/main/assets",
+        "to": "web"
+      }
+    ],
+    "win": {
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Memetflix",
+      "artifactName": "Memetflix-Setup-${version}.exe"
+    },
+    "portable": {
+      "artifactName": "Memetflix-Portable-${version}.exe"
+    }
+  }
+}
