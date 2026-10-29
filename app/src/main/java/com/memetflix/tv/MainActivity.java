@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.UiModeManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -36,6 +37,7 @@ import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.SslErrorHandler;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -78,6 +80,12 @@ public class MainActivity extends Activity {
     private static final String PREF_CURSOR_ENABLED = "cursor_enabled";
     private static final String PREF_USE_CLASSIC_WEB = "use_classic_web";
 
+    private static final String MSG_NO_NETWORK =
+            "No se pudo conectar al servidor.\nVerifica tu conexión a Internet.";
+    private static final String MSG_NO_WEBVIEW =
+            "Este dispositivo no tiene \"Android System WebView\" disponible.\n"
+                    + "Instálalo o actualízalo desde Play Store y vuelve a intentarlo.";
+
     private static final String UA_DESKTOP =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
@@ -115,6 +123,7 @@ public class MainActivity extends Activity {
 
     private LinearLayout splashOverlay;
     private LinearLayout errorOverlay;
+    private TextView errorMessageView;
     private CursorOverlayView cursorOverlay;
 
     private boolean isTvDevice = false;
@@ -155,17 +164,87 @@ public class MainActivity extends Activity {
 
         buildNativeUi();
         enableImmersiveFullscreen();
-        configureWebView();
 
-        if (isNetworkAvailable()) {
-            loadStartPage();
+        if (webView == null) {
+            showErrorOverlay(MSG_NO_WEBVIEW);
         } else {
-            showErrorOverlay();
+            configureWebView();
+            if (isNetworkAvailable()) {
+                loadStartPage();
+            } else {
+                showErrorOverlay(MSG_NO_NETWORK);
+            }
         }
+
+        showLastCrashIfAny();
     }
 
     private void loadStartPage() {
+        if (webView == null) return;
         webView.loadUrl(useClassicWeb ? WEB_HOME_URL : CUSTOM_UI_URL);
+    }
+
+    /**
+     * Crea el WebView. Si el teléfono no tiene "Android System WebView" (o se está
+     * actualizando), el constructor lanza una excepción que antes cerraba la app.
+     */
+    private WebView createWebView() {
+        try {
+            WebView view = new WebView(this);
+            view.setBackgroundColor(Color.BLACK);
+            view.setLayoutParams(new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+            ));
+            return view;
+        } catch (Throwable e) {
+            return null;
+        }
+    }
+
+    /** Reemplaza el WebView actual por uno nuevo (p. ej. tras un fallo del proceso de renderizado). */
+    private void recreateWebView() {
+        if (webView != null) {
+            rootContainer.removeView(webView);
+            try {
+                webView.destroy();
+            } catch (Throwable ignored) {
+            }
+        }
+        webView = createWebView();
+        if (webView == null) {
+            showErrorOverlay(MSG_NO_WEBVIEW);
+            return;
+        }
+        rootContainer.addView(webView, 0);
+        configureWebView();
+        errorOverlay.setVisibility(View.GONE);
+        showSplashOverlay();
+        loadStartPage();
+    }
+
+    private void showLastCrashIfAny() {
+        final String report = MemetflixApp.consumeLastCrash(this);
+        if (report == null || report.trim().isEmpty()) return;
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK);
+        builder.setTitle("Memetflix se cerró la última vez");
+        builder.setMessage("Comparte este reporte con el desarrollador para poder corregirlo:\n\n"
+                + (report.length() > 1500 ? report.substring(0, 1500) + "…" : report));
+        builder.setPositiveButton("Compartir reporte", (dialog, which) -> {
+            Intent send = new Intent(Intent.ACTION_SEND);
+            send.setType("text/plain");
+            send.putExtra(Intent.EXTRA_SUBJECT, "Error de Memetflix");
+            send.putExtra(Intent.EXTRA_TEXT, report);
+            try {
+                startActivity(Intent.createChooser(send, "Compartir reporte"));
+            } catch (Throwable ignored) {
+            }
+        });
+        builder.setNegativeButton("Cerrar", null);
+        try {
+            builder.show();
+        } catch (Throwable ignored) {
+        }
     }
 
     private boolean detectTvDevice() {
@@ -186,13 +265,10 @@ public class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT
         ));
 
-        webView = new WebView(this);
-        webView.setBackgroundColor(Color.BLACK);
-        webView.setLayoutParams(new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-        ));
-        rootContainer.addView(webView);
+        webView = createWebView();
+        if (webView != null) {
+            rootContainer.addView(webView);
+        }
 
         fullscreenVideoContainer = new FrameLayout(this);
         fullscreenVideoContainer.setBackgroundColor(Color.BLACK);
@@ -292,7 +368,8 @@ public class MainActivity extends Activity {
         errorLayout.addView(logo);
 
         TextView msg = new TextView(this);
-        msg.setText("No se pudo conectar al servidor.\nVerifica tu conexión a Internet.");
+        errorMessageView = msg;
+        msg.setText(MSG_NO_NETWORK);
         msg.setTextColor(Color.WHITE);
         msg.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
         msg.setGravity(Gravity.CENTER);
@@ -317,6 +394,10 @@ public class MainActivity extends Activity {
         retryBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (webView == null) {
+                    recreateWebView();
+                    return;
+                }
                 errorOverlay.setVisibility(View.GONE);
                 showSplashOverlay();
                 loadStartPage();
@@ -420,6 +501,23 @@ public class MainActivity extends Activity {
             @Override
             public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
                 handler.proceed();
+            }
+
+            // Sin esto, si el proceso de renderizado de Chrome/WebView se cae (poca RAM,
+            // WebView desactualizado, GPU), Android cierra toda la app: "Memetflix sigue fallando".
+            @Override
+            public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                if (view != webView) {
+                    view.destroy();
+                    return true;
+                }
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        recreateWebView();
+                    }
+                });
+                return true;
             }
         });
 
@@ -574,7 +672,7 @@ public class MainActivity extends Activity {
                 result.put("embedUrl", selectedEmbedUrl);
                 result.put("subtitles", subtitlesArr);
                 return result.toString();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 return "{\"ok\":false}";
             }
         }
@@ -619,8 +717,8 @@ public class MainActivity extends Activity {
             }
             reader.close();
             return sb.toString();
-        } catch (Exception e) {
-            return "{\"error\":true,\"message\":\"" + e.getMessage() + "\"}";
+        } catch (Throwable e) {
+            return "{\"error\":true,\"message\":" + JSONObject.quote(String.valueOf(e.getMessage())) + "}";
         } finally {
             if (conn != null) {
                 conn.disconnect();
@@ -668,7 +766,7 @@ public class MainActivity extends Activity {
             }
             wordMatcher.appendTail(sb);
             return sb.toString();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return "";
         }
     }
@@ -802,7 +900,10 @@ public class MainActivity extends Activity {
         }, delayMs);
     }
 
-    private void showErrorOverlay() {
+    private void showErrorOverlay(String message) {
+        if (errorMessageView != null && message != null) {
+            errorMessageView.setText(message);
+        }
         if (splashOverlay != null) {
             splashOverlay.setVisibility(View.GONE);
         }
@@ -839,7 +940,7 @@ public class MainActivity extends Activity {
             }
         }
 
-        if (cursorEnabled && customVideoView == null && errorOverlay.getVisibility() != View.VISIBLE) {
+        if (cursorEnabled && webView != null && customVideoView == null && errorOverlay.getVisibility() != View.VISIBLE) {
             if (isDpadDirectionKey(keyCode)) {
                 if (action == KeyEvent.ACTION_DOWN) {
                     cursorOverlay.moveByKey(keyCode, event.getRepeatCount());
@@ -873,6 +974,10 @@ public class MainActivity extends Activity {
     }
 
     private void handleBackNavigation() {
+        if (webView == null) {
+            showQuickMenu();
+            return;
+        }
         if (customVideoView != null) {
             webView.getWebChromeClient().onHideCustomView();
             return;
@@ -922,6 +1027,10 @@ public class MainActivity extends Activity {
                     loadStartPage();
                     break;
                 case 1:
+                    if (webView == null) {
+                        recreateWebView();
+                        break;
+                    }
                     showSplashOverlay();
                     webView.reload();
                     break;
