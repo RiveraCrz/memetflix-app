@@ -34,6 +34,11 @@ El botón **📺 Transmitir** del reproductor busca Chromecast / Google TV y Sma
 red: marca **Redes privadas** y pulsa **Permitir**. Si no aparece ninguna TV,
 también se puede duplicar la pantalla con `Win + K`.
 
+## Descargas
+El botón ⬇ Descargar guarda la película o capítulo en
+`%APPDATA%\Memetflix\offline` (`downloads.js`) para verlo sin internet desde
+la pestaña **Descargas**.
+
 ## Teclas
 - `Esc` o el botón Atrás del ratón: igual que el botón Atrás de Android.
 - `F11`: pantalla completa.

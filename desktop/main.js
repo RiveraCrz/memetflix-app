@@ -1,8 +1,14 @@
 // Memetflix para escritorio: reutiliza la interfaz de Android (memetflix.html)
 // y reemplaza el puente Java `MemetflixNative` con el proceso principal de Electron.
-const { app, BrowserWindow, ipcMain, net, session, Menu } = require("electron");
+const { app, BrowserWindow, ipcMain, net, session, Menu, protocol } = require("electron");
 const path = require("path");
 const { CastManager } = require("./cast");
+const { OfflineStore, OFFLINE_SCHEME } = require("./downloads");
+
+// Lo descargado se sirve como mfoffline://local/<id>/... para que hls.js lo lea con fetch
+protocol.registerSchemesAsPrivileged([
+  { scheme: OFFLINE_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } }
+]);
 
 const WEB_HOME_URL = "https://lamovie.la/";
 const UA_DESKTOP =
@@ -155,6 +161,7 @@ async function resolveVideoStream(postId) {
 }
 
 let castManager = null;
+let offlineStore = null;
 
 // Avisos para la interfaz: window.__onCastDevices(lista) / window.__onCastStatus(estado)
 function sendToUi(fn, data) {
@@ -192,6 +199,34 @@ function registerBridge() {
   ipcMain.on("native:castControl", (_event, action, value) => {
     castManager.control(String(action), Number(value) || 0);
   });
+
+  // Descargas para ver sin conexión (el avance llega por __onDownloadUpdate)
+  offlineStore = new OfflineStore(path.join(app.getPath("userData"), "offline"), {
+    onUpdate: (item) => sendToUi("__onDownloadUpdate", item),
+    resolve: async (postId) => {
+      try {
+        const data = JSON.parse(await resolveVideoStream(String(postId)));
+        return data && data.m3u8 ? data : null;
+      } catch (e) {
+        return null;
+      }
+    }
+  });
+  protocol.handle(OFFLINE_SCHEME, (request) => offlineStore.serve(request));
+  ipcMain.on("native:downloadList", (event) => {
+    event.returnValue = JSON.stringify(offlineStore.list());
+  });
+  ipcMain.on("native:downloadStart", (event, metaJson) => {
+    try {
+      offlineStore.start(String(metaJson));
+      event.returnValue = "ok";
+    } catch (e) {
+      event.returnValue = "fail";
+    }
+  });
+  ipcMain.on("native:downloadPause", (_event, id) => offlineStore.pause(String(id)));
+  ipcMain.on("native:downloadResume", (_event, id) => offlineStore.resume(String(id)));
+  ipcMain.on("native:downloadDelete", (_event, id) => offlineStore.delete(String(id)));
 }
 
 function configureSession() {

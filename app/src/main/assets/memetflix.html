@@ -572,6 +572,90 @@
       transition: background 0.2s, border-color 0.2s;
     }
 
+    .ep-dl {
+      margin-left: auto;
+      flex: none;
+      min-width: 40px;
+      height: 36px;
+      padding: 0 10px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .ep-dl.done {
+      color: #4ade80;
+      border-color: rgba(74, 222, 128, 0.5);
+    }
+
+    .downloads-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .dl-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .dl-thumb {
+      width: 56px;
+      height: 80px;
+      flex: none;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #222;
+    }
+
+    .dl-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .dl-title {
+      font-size: 15px;
+      font-weight: 800;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dl-status {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 4px 0 6px;
+    }
+
+    .dl-bar {
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.15);
+      overflow: hidden;
+    }
+
+    .dl-bar > span {
+      display: block;
+      height: 100%;
+      background: var(--red);
+    }
+
+    .dl-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
     .ep-card:hover {
       background: rgba(229, 9, 20, 0.15);
       border-color: var(--red);
@@ -657,8 +741,10 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 25%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.92) 100%);
-      padding: 20px 24px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0) 72%, rgba(0,0,0,0.88) 100%);
+      padding: 16px 20px;
+      padding-top: max(16px, env(safe-area-inset-top));
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
       transition: opacity 0.3s ease;
     }
 
@@ -671,11 +757,18 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      gap: 12px;
+    }
+
+    .player-top-actions {
+      display: flex;
+      gap: 8px;
     }
 
     .player-title {
-      font-size: 18px;
+      flex: 1;
+      text-align: center;
+      font-size: 17px;
       font-weight: 800;
       color: #fff;
       text-shadow: 0 2px 8px #000;
@@ -684,10 +777,103 @@
       white-space: nowrap;
     }
 
+    .icon-btn {
+      width: 44px;
+      height: 44px;
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .icon-btn svg,
+    .center-btn svg {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .center-btn svg .fill,
+    .icon-btn svg .fill {
+      fill: currentColor;
+      stroke: none;
+    }
+
+    .player-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      gap: clamp(28px, 9vw, 96px);
+    }
+
+    .center-btn {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      cursor: pointer;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.8));
+    }
+
+    .center-btn svg {
+      width: 46px;
+      height: 46px;
+      stroke-width: 1.8;
+    }
+
+    .center-btn span {
+      position: absolute;
+      font-size: 13px;
+      font-weight: 800;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -42%);
+    }
+
+    .center-btn.play {
+      width: 84px;
+      height: 84px;
+      background: rgba(0, 0, 0, 0.35);
+    }
+
+    .center-btn.play svg {
+      width: 52px;
+      height: 52px;
+      stroke-width: 3;
+    }
+
+    .center-btn.play .icon-play,
+    .center-btn.play.paused .icon-pause {
+      display: none;
+    }
+
+    .center-btn.play.paused .icon-play {
+      display: block;
+    }
+
     .player-bottom {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .progress-row {
@@ -711,12 +897,126 @@
       cursor: pointer;
     }
 
-    .controls-row {
+    .bottom-actions {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill-btn {
+      background: transparent;
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-shadow: 0 1px 4px #000;
+    }
+
+    .pill-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Panel de opciones: lateral en horizontal, hoja inferior en vertical */
+    .options-panel {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 18;
+      width: min(360px, 100%);
+      background: rgba(18, 19, 24, 0.97);
+      border-left: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 18px;
+      overflow-y: auto;
+      transform: translateX(105%);
+      transition: transform 0.25s ease;
+    }
+
+    .options-panel.open {
+      transform: none;
+    }
+
+    .options-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .options-head h3 {
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .options-section {
+      padding: 12px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .options-section .ctrl-select,
+    .options-section .ctrl-btn {
+      width: 100%;
+    }
+
+    .options-label {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .options-empty {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .segmented {
+      display: flex;
+      gap: 6px;
+    }
+
+    .seg-btn {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      padding: 9px 4px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .seg-btn.active {
+      background: var(--red);
+      border-color: var(--red);
+    }
+
+    @media (orientation: portrait) {
+      .options-panel {
+        top: auto;
+        left: 0;
+        width: 100%;
+        max-height: 75%;
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px 16px 0 0;
+        transform: translateY(105%);
+      }
+      .center-btn.play {
+        width: 72px;
+        height: 72px;
+      }
+      .center-btn svg {
+        width: 38px;
+        height: 38px;
+      }
     }
 
     .ctrl-group {
@@ -1062,6 +1362,7 @@
       <button class="nav-btn focusable" id="tab-tvshows" onclick="switchTab('tvshows')">Series</button>
       <button class="nav-btn focusable" id="tab-animes" onclick="switchTab('animes')">Anime</button>
       <button class="nav-btn focusable" id="tab-watching" onclick="switchTab('watching')">Seguir viendo</button>
+      <button class="nav-btn focusable" id="tab-downloads" onclick="switchTab('downloads')" style="display:none;">Descargas</button>
     </nav>
 
     <div class="nav-actions">
@@ -1143,6 +1444,19 @@
       </section>
     </div>
 
+    <!-- Vista Descargas: para ver sin conexión -->
+    <div id="view-downloads" style="display:none;">
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title">Descargas</h2>
+        </div>
+        <div class="downloads-list" id="downloadsList"></div>
+        <p id="downloadsEmpty" style="display:none; color:var(--text-muted); padding:24px 0;">
+          Todavía no descargas nada. Usa el botón ⬇ Descargar en una película o capítulo para verlo sin conexión.
+        </p>
+      </section>
+    </div>
+
     <!-- Vista Seguir viendo: todo lo que el usuario dejó a medias -->
     <div id="view-watching" style="display:none;">
       <section class="section">
@@ -1174,6 +1488,7 @@
             </div>
             <div class="hero-buttons" id="detailPlayWrap" style="margin-top:12px;">
               <button class="btn-primary focusable" id="detailPlayBtn">▶ Reproducir Ahora (Sin Anuncios)</button>
+              <button class="btn-secondary focusable" id="detailDownloadBtn" style="display:none;">⬇ Descargar</button>
             </div>
           </div>
         </div>
@@ -1209,9 +1524,34 @@
 
     <div class="player-hud" id="playerHud">
       <div class="player-top">
-        <button class="ctrl-btn focusable" onclick="closePlayer()">← Volver</button>
+        <button class="icon-btn focusable" onclick="closePlayer()" title="Volver">
+          <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg>
+        </button>
         <div class="player-title" id="playerTitle">Reproduciendo</div>
-        <button class="ctrl-btn focusable" id="castBtn" onclick="openCastDialog()" style="display:none;">📺 Transmitir</button>
+        <div class="player-top-actions">
+          <button class="icon-btn focusable" id="castBtn" onclick="openCastDialog()" style="display:none;" title="Transmitir">
+            <svg viewBox="0 0 24 24"><path d="M3 18a3 3 0 013 3M3 14a7 7 0 017 7M3 10a11 11 0 0111 11M3 7V5a1 1 0 011-1h16a1 1 0 011 1v14a1 1 0 01-1 1h-5" /></svg>
+          </button>
+          <button class="icon-btn focusable" id="optionsBtn" onclick="openOptionsPanel()" title="Opciones">
+            <svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" /><circle cx="16" cy="6" r="2" /><circle cx="10" cy="12" r="2" /><circle cx="18" cy="18" r="2" /></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Controles centrales sobre el video, como Netflix -->
+      <div class="player-center">
+        <button class="center-btn focusable" onclick="seekRelative(-10)" title="Retroceder 10 segundos">
+          <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 108-8H8M8 4l3-3M8 4l3 3" /></svg>
+          <span>10</span>
+        </button>
+        <button class="center-btn play focusable" id="playPauseBtn" onclick="togglePlayPause()" title="Pausa">
+          <svg class="icon-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" /></svg>
+          <svg class="icon-play" viewBox="0 0 24 24"><path class="fill" d="M7 4.5v15l13-7.5z" /></svg>
+        </button>
+        <button class="center-btn focusable" onclick="seekRelative(10)" title="Avanzar 10 segundos">
+          <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 11-8-8h4M16 4l-3-3M16 4l-3 3" /></svg>
+          <span>10</span>
+        </button>
       </div>
 
       <div class="player-bottom">
@@ -1220,28 +1560,52 @@
           <input type="range" class="seek-slider focusable" id="seekSlider" min="0" max="100" value="0" />
           <span class="time-label" id="durationLabel">00:00</span>
         </div>
-
-        <div class="controls-row">
-          <div class="ctrl-group">
-            <button class="ctrl-btn primary focusable" id="playPauseBtn" onclick="togglePlayPause()">⏸ Pausa</button>
-            <button class="ctrl-btn focusable" onclick="seekRelative(-10)">⏪ -10s</button>
-            <button class="ctrl-btn focusable" onclick="seekRelative(10)">⏩ +10s</button>
-          </div>
-
-          <div class="ctrl-group">
-            <select class="ctrl-select focusable" id="audioTrackSelect" onchange="onAudioTrackChange(this.value)" style="display:none;">
-              <option value="0">🔊 Audio</option>
-            </select>
-
-            <select class="ctrl-select focusable" id="subtitleSelect" onchange="onSubtitleChange(this.value)" style="display:none;">
-              <option value="-1">💬 Sin subtítulos</option>
-            </select>
-
-            <select class="ctrl-select focusable" id="qualitySelect" onchange="onQualityChange(this.value)" style="display:none;">
-              <option value="-1">⚙️ Calidad: Auto</option>
-            </select>
-          </div>
+        <div class="bottom-actions">
+          <button class="pill-btn focusable" onclick="openOptionsPanel()">💬 Audio y subtítulos</button>
+          <button class="pill-btn focusable" id="downloadPlayerBtn" onclick="downloadCurrent()" style="display:none;">⬇ Descargar</button>
+          <button class="pill-btn focusable" id="nextEpisodeBtn" onclick="playNextEpisode()" style="display:none;">⏭ Siguiente episodio</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Opciones agrupadas: se despliegan al tocar ⚙ / Audio y subtítulos -->
+    <div class="options-panel" id="optionsPanel" onclick="event.stopPropagation()">
+      <div class="options-head">
+        <h3>Opciones</h3>
+        <button class="icon-btn focusable" onclick="closeOptionsPanel()" title="Cerrar">✕</button>
+      </div>
+      <div class="options-section">
+        <div class="options-label">Audio</div>
+        <select class="ctrl-select focusable" id="audioTrackSelect" onchange="onAudioTrackChange(this.value)" style="display:none;">
+          <option value="0">🔊 Audio</option>
+        </select>
+        <div class="options-empty" id="audioEmpty">Solo hay un idioma disponible.</div>
+      </div>
+      <div class="options-section">
+        <div class="options-label">Subtítulos</div>
+        <select class="ctrl-select focusable" id="subtitleSelect" onchange="onSubtitleChange(this.value)" style="display:none;">
+          <option value="-1">💬 Sin subtítulos</option>
+        </select>
+        <div class="options-empty" id="subtitleEmpty">Este video no tiene subtítulos.</div>
+      </div>
+      <div class="options-section">
+        <div class="options-label">Calidad</div>
+        <select class="ctrl-select focusable" id="qualitySelect" onchange="onQualityChange(this.value)" style="display:none;">
+          <option value="-1">⚙️ Calidad: Auto</option>
+        </select>
+        <div class="options-empty" id="qualityEmpty">Automática.</div>
+      </div>
+      <div class="options-section" id="orientationSection" style="display:none;">
+        <div class="options-label">Pantalla</div>
+        <div class="segmented">
+          <button class="seg-btn focusable" data-orientation="auto" onclick="setOrientationMode('auto')">⟳ Automática</button>
+          <button class="seg-btn focusable" data-orientation="landscape" onclick="setOrientationMode('landscape')">▭ Horizontal</button>
+          <button class="seg-btn focusable" data-orientation="portrait" onclick="setOrientationMode('portrait')">▯ Vertical</button>
+        </div>
+      </div>
+      <div class="options-section" id="downloadSection" style="display:none;">
+        <div class="options-label">Sin conexión</div>
+        <button class="ctrl-btn focusable" id="downloadOptionBtn" onclick="downloadCurrent()">⬇ Descargar para ver sin conexión</button>
       </div>
     </div>
 
@@ -1444,8 +1808,20 @@
         renderRow("row-movies", movies);
         renderRow("row-tvshows", tvshows);
         renderRow("row-animes", animes);
+        if (movies.length + tvshows.length + animes.length === 0) onCatalogOffline();
       } catch (e) {
         console.error("Error cargando inicio:", e);
+        onCatalogOffline();
+      }
+    }
+
+    // Sin internet: lo descargado se sigue pudiendo ver
+    function onCatalogOffline() {
+      document.getElementById("heroTitle").textContent = "Sin conexión a Internet";
+      document.getElementById("heroOverview").textContent = "Revisa tu conexión. Mientras tanto puedes ver lo que descargaste.";
+      if (Object.values(downloadsById).some(d => d.state === "done")) {
+        showToast("Sin conexión: puedes ver tus descargas");
+        switchTab("downloads");
       }
     }
 
@@ -1484,7 +1860,12 @@
       if (activeBtn) activeBtn.classList.add("active");
 
       document.getElementById("view-watching").style.display = tab === "watching" ? "block" : "none";
-      if (tab === "home") {
+      document.getElementById("view-downloads").style.display = tab === "downloads" ? "block" : "none";
+      if (tab === "downloads") {
+        document.getElementById("view-home").style.display = "none";
+        document.getElementById("view-catalog").style.display = "none";
+        renderDownloads();
+      } else if (tab === "home") {
         document.getElementById("view-home").style.display = "block";
         document.getElementById("view-catalog").style.display = "none";
       } else if (tab === "watching") {
@@ -1584,6 +1965,11 @@
       document.getElementById("detailPlayBtn").onclick = () => {
         startDirectPlayback(item._id, item.title, { item });
       };
+      const detailDl = document.getElementById("detailDownloadBtn");
+      detailDl.dataset.dlId = String(item._id);
+      detailDl.style.display = downloadsSupported() ? "inline-flex" : "none";
+      detailDl.onclick = () => startDownload(item._id, item.title, { item });
+      refreshDownloadBadges();
 
       modal.classList.add("open");
 
@@ -1645,6 +2031,19 @@
             const series = seriesContext(seriesItem, ep, seasonNum);
             startDirectPlayback(ep._id, episodeTitle(series, ep), { series });
           };
+          if (downloadsSupported()) {
+            const dlBtn = document.createElement("button");
+            dlBtn.className = "ep-dl focusable";
+            dlBtn.dataset.dlId = String(ep._id);
+            dlBtn.title = "Descargar";
+            dlBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              const series = seriesContext(seriesItem, ep, seasonNum);
+              startDownload(ep._id, episodeTitle(series, ep), { series });
+            });
+            dlBtn.addEventListener("keydown", (e) => e.stopPropagation());
+            card.appendChild(dlBtn);
+          }
           card.addEventListener("click", playEp);
           card.addEventListener("keydown", (e) => {
             if (e.key === "Enter" || e.keyCode === 13 || e.keyCode === 23) {
@@ -1654,6 +2053,7 @@
           });
           epGrid.appendChild(card);
         });
+        refreshDownloadBadges();
       } catch (e) {
         epGrid.innerHTML = `<p style="color:#f87171;">Error al cargar los episodios.</p>`;
       }
@@ -1724,7 +2124,11 @@
       document.getElementById("playerLoaderText").textContent = "Conectando con servidor HD sin anuncios...";
       document.getElementById("playerTitle").textContent = currentPlayback.title;
       document.getElementById("playerHud").classList.remove("hidden");
-      document.getElementById("castBtn").style.display = castSupported() ? "inline-block" : "none";
+      document.getElementById("castBtn").style.display = castSupported() ? "inline-flex" : "none";
+      document.getElementById("nextEpisodeBtn").style.display = "none";
+      closeOptionsPanel();
+      applyOrientation();
+      updateDownloadButtons();
       document.getElementById("currentTimeLabel").textContent = "00:00";
       document.getElementById("durationLabel").textContent = "00:00";
       seekSlider.value = 0;
@@ -1762,7 +2166,11 @@
 
       try {
         let streamData = null;
-        if (window.MemetflixNative && typeof window.MemetflixNative.resolveVideoStream === "function") {
+        const offline = getCompletedDownload(postId);
+        if (offline) {
+          // Descargado: se reproduce desde el dispositivo, sin conexión
+          streamData = { m3u8: offline.playUrl, subtitles: offline.subtitles || [], poster: "", offline: true };
+        } else if (window.MemetflixNative && typeof window.MemetflixNative.resolveVideoStream === "function") {
           streamData = await new Promise((resolve, reject) => {
             setTimeout(() => {
               try {
@@ -1780,8 +2188,10 @@
           currentPlayback.stream = {
             m3u8: streamData.m3u8,
             poster: streamData.poster || "",
-            subtitles: streamData.subtitles || []
+            subtitles: streamData.subtitles || [],
+            offline: !!streamData.offline
           };
+          updateDownloadButtons();
           if (isCasting()) {
             // Ya se está transmitiendo: el siguiente título también va a la TV
             loader.style.display = "none";
@@ -1992,6 +2402,8 @@
       video.removeAttribute("src");
       iframe.src = "about:blank";
       overlay.classList.remove("open");
+      closeOptionsPanel();
+      resetOrientation();
       currentPlayback = null;
       renderContinueRow();
     }
@@ -2025,10 +2437,10 @@
     }
 
     videoEl.addEventListener("play", () => {
-      document.getElementById("playPauseBtn").textContent = "⏸ Pausa";
+      setPlayPauseState(false);
     });
     videoEl.addEventListener("pause", () => {
-      document.getElementById("playPauseBtn").textContent = "▶ Play";
+      setPlayPauseState(true);
       if (!isCasting()) saveCurrentProgress(true);
     });
     videoEl.addEventListener("timeupdate", () => {
@@ -2064,14 +2476,38 @@
     });
     window.addEventListener("pagehide", () => saveCurrentProgress(true));
 
+    let lastTap = { time: 0, x: 0 };
+
     function onPlayerTap(e) {
       const hud = document.getElementById("playerHud");
+      if (e.target.closest && e.target.closest("button, input, select, .options-panel, .player-dialog, .next-episode-card")) return;
+      if (document.getElementById("optionsPanel").classList.contains("open")) {
+        closeOptionsPanel();
+        return;
+      }
+      // Doble toque a los lados: retroceder / avanzar 10 s (como Netflix en el celular)
+      const now = Date.now();
+      const width = window.innerWidth || 1;
+      const side = e.clientX < width * 0.35 ? -1 : (e.clientX > width * 0.65 ? 1 : 0);
+      if (side !== 0 && now - lastTap.time < 320 && Math.abs(e.clientX - lastTap.x) < 80) {
+        lastTap = { time: 0, x: 0 };
+        seekRelative(side * 10);
+        showToast(side < 0 ? "⏪ -10 s" : "⏩ +10 s");
+        return;
+      }
+      lastTap = { time: now, x: e.clientX };
       if (hud.classList.contains("hidden")) {
         hud.classList.remove("hidden");
         scheduleHideHud();
-      } else if (e.target.id === "memetflixVideo" || e.target.id === "playerHud") {
+      } else {
         hud.classList.add("hidden");
       }
+    }
+
+    function setPlayPauseState(paused) {
+      const btn = document.getElementById("playPauseBtn");
+      btn.classList.toggle("paused", paused);
+      btn.title = paused ? "Reproducir" : "Pausa";
     }
 
     function scheduleHideHud() {
@@ -2080,7 +2516,7 @@
       clearTimeout(hudTimeout);
       hudTimeout = setTimeout(() => {
         // Mientras se transmite el HUD se queda visible: es el control remoto de la TV
-        if (!videoEl.paused && !isCasting()) {
+        if (!videoEl.paused && !isCasting() && !document.getElementById("optionsPanel").classList.contains("open")) {
           hud.classList.add("hidden");
         }
       }, 4000);
@@ -2337,8 +2773,18 @@
 
     async function prefetchNextEpisode(pb, token) {
       try {
-        const next = await findNextEpisode(pb.series);
-        if (token === playbackToken && currentPlayback === pb) pb.nextEpisode = next;
+        let next = null;
+        try {
+          next = await findNextEpisode(pb.series);
+        } catch (e) {
+          console.warn("No se pudo buscar el siguiente capítulo", e);
+        }
+        // Sin conexión: el siguiente capítulo que esté descargado
+        if (!next) next = findNextDownloaded(pb.series);
+        if (token === playbackToken && currentPlayback === pb) {
+          pb.nextEpisode = next;
+          document.getElementById("nextEpisodeBtn").style.display = next ? "inline-block" : "none";
+        }
       } catch (e) {
         console.warn("No se pudo buscar el siguiente capítulo", e);
       }
@@ -2484,6 +2930,10 @@
         showToast("Este video no se puede transmitir");
         return;
       }
+      if (pb.stream.offline) {
+        showToast("Lo descargado solo se puede ver en este dispositivo");
+        return;
+      }
       closeCastDialog();
       const startAt = videoEl.duration > 0 ? videoEl.currentTime : 0;
       castCurrentStream(dev.id, dev.name, startAt);
@@ -2595,7 +3045,7 @@
       if (status.duration > 0) castState.duration = status.duration;
 
       document.getElementById("castBannerSub").textContent = CAST_STATE_TEXT[state] || "";
-      document.getElementById("playPauseBtn").textContent = state === "paused" ? "▶ Play" : "⏸ Pausa";
+      setPlayPauseState(state === "paused");
 
       if (state === "ended") {
         document.getElementById("castBannerSub").textContent = "Terminó en la TV";
@@ -2612,6 +3062,306 @@
           showToast("Abre \"Transmitir pantalla\" o \"Smart View\" desde los ajustes rápidos");
         }
       } catch (e) {}
+    }
+
+    // =========================================================================
+    // OPCIONES DEL REPRODUCTOR (audio, subtítulos, calidad, pantalla, descarga)
+    // =========================================================================
+    function openOptionsPanel() {
+      const pairs = [["audioTrackSelect", "audioEmpty"], ["subtitleSelect", "subtitleEmpty"], ["qualitySelect", "qualityEmpty"]];
+      pairs.forEach(([selectId, emptyId]) => {
+        const shown = document.getElementById(selectId).style.display !== "none";
+        document.getElementById(emptyId).style.display = shown ? "none" : "block";
+      });
+      document.getElementById("orientationSection").style.display = canRotate() ? "block" : "none";
+      updateOrientationButtons();
+      updateDownloadButtons();
+      document.getElementById("optionsPanel").classList.add("open");
+      clearTimeout(hudTimeout);
+      const first = document.querySelector("#optionsPanel select:not([style*='none']), #optionsPanel .seg-btn, #optionsPanel .icon-btn");
+      if (first) setTimeout(() => first.focus(), 50);
+    }
+
+    function closeOptionsPanel() {
+      const panel = document.getElementById("optionsPanel");
+      if (!panel.classList.contains("open")) return;
+      panel.classList.remove("open");
+      scheduleHideHud();
+    }
+
+    // =========================================================================
+    // ORIENTACIÓN: automática (según cómo se gire el celular), horizontal o vertical
+    // =========================================================================
+    const ORIENTATION_KEY = "memetflix_orientation";
+
+    function canRotate() {
+      try {
+        return !!(window.MemetflixNative && typeof window.MemetflixNative.canRotate === "function"
+          && window.MemetflixNative.canRotate());
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function getOrientationMode() {
+      try {
+        return localStorage.getItem(ORIENTATION_KEY) || "auto";
+      } catch (e) {
+        return "auto";
+      }
+    }
+
+    function setOrientationMode(mode) {
+      try {
+        localStorage.setItem(ORIENTATION_KEY, mode);
+      } catch (e) {}
+      applyOrientation();
+      updateOrientationButtons();
+      showToast(mode === "auto" ? "Pantalla: automática" : (mode === "landscape" ? "Pantalla: horizontal" : "Pantalla: vertical"));
+    }
+
+    function applyOrientation() {
+      if (!canRotate()) return;
+      try {
+        window.MemetflixNative.setOrientation(getOrientationMode());
+      } catch (e) {}
+    }
+
+    // Fuera del reproductor la app vuelve a girar como el sistema
+    function resetOrientation() {
+      if (!canRotate()) return;
+      try {
+        window.MemetflixNative.setOrientation("system");
+      } catch (e) {}
+    }
+
+    function updateOrientationButtons() {
+      const mode = getOrientationMode();
+      document.querySelectorAll("#orientationSection .seg-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.orientation === mode);
+      });
+    }
+
+    // =========================================================================
+    // DESCARGAS PARA VER SIN CONEXIÓN
+    // El puente nativo baja el .m3u8, los segmentos y subtítulos al dispositivo.
+    // Avisos de vuelta: window.__onDownloadUpdate(descarga)
+    // =========================================================================
+    let downloadsById = {};
+
+    function downloadsSupported() {
+      return !!(window.MemetflixNative && typeof window.MemetflixNative.downloadStart === "function");
+    }
+
+    function loadDownloads() {
+      if (!downloadsSupported()) return;
+      try {
+        const list = JSON.parse(window.MemetflixNative.downloadList() || "[]");
+        downloadsById = {};
+        list.forEach(d => { downloadsById[String(d.id)] = d; });
+      } catch (e) {
+        downloadsById = {};
+      }
+      document.getElementById("tab-downloads").style.display = "inline-flex";
+    }
+
+    function getCompletedDownload(postId) {
+      const d = downloadsById[String(postId)];
+      return d && d.state === "done" && d.playUrl ? d : null;
+    }
+
+    window.__onDownloadUpdate = function (item) {
+      if (!item || item.id === undefined) return;
+      const id = String(item.id);
+      const prev = downloadsById[id];
+      if (item.state === "deleted") {
+        delete downloadsById[id];
+      } else {
+        downloadsById[id] = item;
+        if (item.state === "done" && (!prev || prev.state !== "done")) {
+          showToast("Descarga lista: " + ((item.meta && item.meta.title) || "título"));
+        } else if (item.state === "error" && (!prev || prev.state !== "error")) {
+          showToast("Falló la descarga: " + (item.error || "error de red"));
+        }
+      }
+      refreshDownloadBadges();
+      updateDownloadButtons();
+      if (currentTab === "downloads") renderDownloads();
+    };
+
+    async function startDownload(postId, title, ctx, stream) {
+      if (!downloadsSupported()) return;
+      const existing = downloadsById[String(postId)];
+      if (existing) {
+        if (existing.state === "paused" || existing.state === "error") {
+          window.MemetflixNative.downloadResume(String(postId));
+          showToast("Descarga reanudada");
+        } else {
+          showToast(existing.state === "done" ? "Ya está descargado" : "Ya se está descargando");
+        }
+        return;
+      }
+      ctx = ctx || {};
+      showToast("Preparando descarga...");
+      let data = stream;
+      if (!data) {
+        try {
+          data = await new Promise((resolve, reject) => {
+            setTimeout(() => {
+              try {
+                resolve(JSON.parse(window.MemetflixNative.resolveVideoStream(String(postId))));
+              } catch (err) {
+                reject(err);
+              }
+            }, 30);
+          });
+        } catch (e) {
+          data = null;
+        }
+      }
+      if (!data || !data.m3u8 || data.offline) {
+        showToast("Este título no se puede descargar");
+        return;
+      }
+      const art = ctx.series || compactItem(ctx.item);
+      const meta = {
+        id: String(postId),
+        title: title || "Memetflix",
+        m3u8: data.m3u8,
+        subtitles: (data.subtitles || []).filter(sub => sub.file && !sub.file.includes("empty.srt")),
+        poster: art && art.images ? getImageUrl(art.images.poster) : "",
+        item: compactItem(ctx.item),
+        series: ctx.series || null
+      };
+      try {
+        window.MemetflixNative.downloadStart(JSON.stringify(meta));
+        showToast("Descargando... lo verás en Descargas");
+      } catch (e) {
+        showToast("No se pudo iniciar la descarga");
+      }
+    }
+
+    function downloadCurrent() {
+      const pb = currentPlayback;
+      if (!pb) return;
+      closeOptionsPanel();
+      startDownload(pb.postId, pb.title, { item: pb.item, series: pb.series }, pb.stream);
+    }
+
+    function downloadLabel(d) {
+      if (!d) return "⬇";
+      if (d.state === "done") return "✓";
+      if (d.state === "downloading" || d.state === "queued") return Math.floor((d.progress || 0) * 100) + "%";
+      if (d.state === "paused") return "⏸";
+      return "⚠";
+    }
+
+    function refreshDownloadBadges() {
+      document.querySelectorAll(".ep-dl[data-dl-id]").forEach(btn => {
+        const d = downloadsById[btn.dataset.dlId];
+        btn.textContent = downloadLabel(d);
+        btn.classList.toggle("done", !!d && d.state === "done");
+      });
+      const detailBtn = document.getElementById("detailDownloadBtn");
+      if (detailBtn.dataset.dlId) {
+        const d = downloadsById[detailBtn.dataset.dlId];
+        detailBtn.textContent = !d ? "⬇ Descargar"
+          : d.state === "done" ? "✓ Descargado"
+          : (d.state === "downloading" || d.state === "queued") ? `⬇ Descargando ${Math.floor((d.progress || 0) * 100)}%`
+          : d.state === "paused" ? "⏸ Descarga en pausa" : "⚠ Reintentar descarga";
+      }
+    }
+
+    function updateDownloadButtons() {
+      const pb = currentPlayback;
+      const can = downloadsSupported() && !!pb && !(pb.stream && pb.stream.offline);
+      const d = pb ? downloadsById[pb.postId] : null;
+      const label = !d ? "⬇ Descargar" : d.state === "done" ? "✓ Descargado"
+        : d.state === "downloading" || d.state === "queued" ? `⬇ ${Math.floor((d.progress || 0) * 100)}%` : "⬇ Reanudar descarga";
+      const playerBtn = document.getElementById("downloadPlayerBtn");
+      playerBtn.style.display = can ? "inline-block" : "none";
+      playerBtn.textContent = label;
+      document.getElementById("downloadSection").style.display = can ? "block" : "none";
+      document.getElementById("downloadOptionBtn").textContent =
+        label === "⬇ Descargar" ? "⬇ Descargar para ver sin conexión" : label;
+    }
+
+    function formatBytes(bytes) {
+      if (!(bytes > 0)) return "";
+      if (bytes >= 1e9) return (bytes / 1e9).toFixed(1) + " GB";
+      return Math.max(1, Math.round(bytes / 1e6)) + " MB";
+    }
+
+    function renderDownloads() {
+      const listEl = document.getElementById("downloadsList");
+      const items = Object.values(downloadsById)
+        .sort((a, b) => (b.created || 0) - (a.created || 0));
+      listEl.innerHTML = "";
+      document.getElementById("downloadsEmpty").style.display = items.length ? "none" : "block";
+      items.forEach(d => {
+        const meta = d.meta || {};
+        const row = document.createElement("div");
+        row.className = "dl-row";
+        const pct = Math.floor((d.progress || 0) * 100);
+        let status;
+        if (d.state === "done") status = "Listo para ver sin conexión" + (d.bytes ? " • " + formatBytes(d.bytes) : "");
+        else if (d.state === "downloading") status = `Descargando ${pct}%` + (d.bytes ? " • " + formatBytes(d.bytes) : "");
+        else if (d.state === "queued") status = "En espera...";
+        else if (d.state === "paused") status = `En pausa (${pct}%)`;
+        else status = "Error: " + (d.error || "no se pudo descargar");
+
+        row.innerHTML = `
+          <img class="dl-thumb" alt="" />
+          <div class="dl-info">
+            <div class="dl-title"></div>
+            <div class="dl-status"></div>
+            <div class="dl-bar"><span style="width:${d.state === "done" ? 100 : pct}%"></span></div>
+          </div>
+          <div class="dl-actions"></div>
+        `;
+        const img = row.querySelector(".dl-thumb");
+        if (meta.poster) img.src = meta.poster;
+        img.onerror = () => { img.style.visibility = "hidden"; };
+        row.querySelector(".dl-title").textContent = meta.title || "Sin título";
+        row.querySelector(".dl-status").textContent = status;
+
+        const actions = row.querySelector(".dl-actions");
+        const addBtn = (label, cls, fn) => {
+          const b = document.createElement("button");
+          b.className = "ctrl-btn focusable" + (cls ? " " + cls : "");
+          b.textContent = label;
+          b.onclick = fn;
+          actions.appendChild(b);
+        };
+        if (d.state === "done") {
+          addBtn("▶ Ver", "primary", () => startDirectPlayback(d.id, meta.title,
+            meta.series ? { series: meta.series } : { item: meta.item }));
+        } else if (d.state === "downloading" || d.state === "queued") {
+          addBtn("⏸ Pausar", "", () => window.MemetflixNative.downloadPause(String(d.id)));
+        } else {
+          addBtn("▶ Reanudar", "", () => window.MemetflixNative.downloadResume(String(d.id)));
+        }
+        addBtn("🗑", "", () => {
+          if (confirm(`¿Borrar "${meta.title || "esta descarga"}" del dispositivo?`)) {
+            window.MemetflixNative.downloadDelete(String(d.id));
+          }
+        });
+        listEl.appendChild(row);
+      });
+    }
+
+    // Siguiente capítulo entre lo descargado (para cuando no hay internet)
+    function findNextDownloaded(series) {
+      if (!series) return null;
+      const candidates = Object.values(downloadsById)
+        .filter(d => d.state === "done" && d.meta && d.meta.series && String(d.meta.series.id) === String(series.id))
+        .map(d => d.meta.series)
+        .filter(s => s.season > series.season || (s.season === series.season && s.episode > series.episode))
+        .sort((a, b) => a.season - b.season || a.episode - b.episode);
+      if (!candidates.length) return null;
+      const s = candidates[0];
+      const d = downloadsById[String(s.episodeId)];
+      return { ep: { _id: s.episodeId }, series: s, title: (d && d.meta && d.meta.title) || episodeTitle(s, null) };
     }
 
     // Autenticación de Usuario (/wp-json/wpf/v1/auth/login)
@@ -2684,6 +3434,10 @@
 
     // Manejo global del botón Atrás (llamado desde Android MainActivity)
     window.__handleAndroidBack = function () {
+      if (document.getElementById("optionsPanel").classList.contains("open")) {
+        closeOptionsPanel();
+        return true;
+      }
       if (document.getElementById("castDialog").classList.contains("open")) {
         closeCastDialog();
         return true;
@@ -2708,7 +3462,16 @@
     };
 
     // Inicialización
+    // La barra de arriba puede ocupar dos renglones (más pestañas): el contenido empieza debajo
+    function fitContentBelowNavbar() {
+      const navbar = document.querySelector(".navbar");
+      if (navbar) document.getElementById("mainContent").style.paddingTop = (navbar.offsetHeight + 8) + "px";
+    }
+    window.addEventListener("resize", fitContentBelowNavbar);
+
     updateAccountUi();
+    loadDownloads();
+    fitContentBelowNavbar();
     renderContinueRow();
     loadHomeCatalog();
   </script>
