@@ -6,6 +6,7 @@ import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Canvas;
@@ -132,6 +133,14 @@ public class MainActivity extends Activity {
     private boolean backLongPressHandled = false;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private CastManager castManager;
+    private OfflineStore offlineStore;
+    private final OfflineStore.Listener offlineListener = new OfflineStore.Listener() {
+        @Override
+        public void onUpdate(String itemJson) {
+            runJsCallback("__onDownloadUpdate", itemJson);
+        }
+    };
     private final Runnable hideCursorRunnable = new Runnable() {
         @Override
         public void run() {
@@ -169,7 +178,8 @@ public class MainActivity extends Activity {
             showErrorOverlay(MSG_NO_WEBVIEW);
         } else {
             configureWebView();
-            if (isNetworkAvailable()) {
+            // Nuestra interfaz es local: sin internet igual abre para ver lo descargado
+            if (isNetworkAvailable() || !useClassicWeb) {
                 loadStartPage();
             } else {
                 showErrorOverlay(MSG_NO_NETWORK);
@@ -438,6 +448,31 @@ public class MainActivity extends Activity {
 
         // Registrar puente nativo para consumir los endpoints de LaMovie y extraer streams .m3u8 directos
         webView.addJavascriptInterface(new MemetflixBridge(), "MemetflixNative");
+        castManager = new CastManager(this, new CastManager.Listener() {
+            @Override
+            public void onDevices(String devicesJson) {
+                runJsCallback("__onCastDevices", devicesJson);
+            }
+
+            @Override
+            public void onStatus(String statusJson) {
+                runJsCallback("__onCastStatus", statusJson);
+            }
+        });
+        offlineStore = OfflineStore.get(this);
+        offlineStore.addListener(offlineListener);
+        final MemetflixBridge resolverBridge = new MemetflixBridge();
+        offlineStore.setResolver(new OfflineStore.StreamResolver() {
+            @Override
+            public JSONObject resolve(String postId) {
+                try {
+                    JSONObject o = new JSONObject(resolverBridge.resolveVideoStream(postId));
+                    return o.optString("m3u8").isEmpty() ? null : o;
+                } catch (Throwable e) {
+                    return null;
+                }
+            }
+        });
 
         webView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
@@ -467,6 +502,9 @@ public class MainActivity extends Activity {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && request != null && request.getUrl() != null) {
+                    if (OfflineStore.OFFLINE_HOST.equals(request.getUrl().getHost()) && offlineStore != null) {
+                        return offlineStore.serve(request.getUrl());
+                    }
                     if (isAdUri(request.getUrl())) {
                         return createStealthAdResponse(request.getUrl());
                     }
@@ -676,6 +714,131 @@ public class MainActivity extends Activity {
                 return "{\"ok\":false}";
             }
         }
+
+        // Transmitir a la TV: la lista de equipos y el estado llegan por __onCastDevices / __onCastStatus
+        @JavascriptInterface
+        public void castDiscover() {
+            if (castManager != null) castManager.discover();
+        }
+
+        @JavascriptInterface
+        public void castStart(String deviceId, String mediaJson) {
+            if (castManager != null) castManager.start(deviceId, mediaJson);
+        }
+
+        @JavascriptInterface
+        public void castControl(String action, double value) {
+            if (castManager != null) castManager.control(action, value);
+        }
+
+        @JavascriptInterface
+        public String openScreenMirroring() {
+            return openSystemScreenCast() ? "ok" : "fail";
+        }
+
+        // Orientación del reproductor: en Android TV no se gira
+        @JavascriptInterface
+        public boolean canRotate() {
+            return !isTvDevice;
+        }
+
+        @JavascriptInterface
+        public void setOrientation(final String mode) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    int value;
+                    if ("landscape".equals(mode)) {
+                        value = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+                    } else if ("portrait".equals(mode)) {
+                        value = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
+                    } else if ("auto".equals(mode)) {
+                        // Gira según cómo se sostenga el celular, aunque el giro automático esté bloqueado
+                        value = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR;
+                    } else {
+                        value = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+                    }
+                    setRequestedOrientation(value);
+                }
+            });
+        }
+
+        // Descargas para ver sin conexión: el avance llega por __onDownloadUpdate
+        @JavascriptInterface
+        public String downloadStart(String metaJson) {
+            try {
+                offlineStore.start(metaJson);
+                askNotificationPermission();
+                DownloadService.start(MainActivity.this);
+                return "ok";
+            } catch (Throwable e) {
+                return "fail";
+            }
+        }
+
+        @JavascriptInterface
+        public String downloadList() {
+            return offlineStore != null ? offlineStore.listJson() : "[]";
+        }
+
+        @JavascriptInterface
+        public void downloadPause(String id) {
+            offlineStore.pause(id);
+        }
+
+        @JavascriptInterface
+        public void downloadResume(String id) {
+            offlineStore.resume(id);
+            DownloadService.start(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public void downloadDelete(String id) {
+            offlineStore.delete(id);
+        }
+    }
+
+    /** Android 13+: pedir permiso para la notificación con el avance de la descarga. */
+    private void askNotificationPermission() {
+        if (Build.VERSION.SDK_INT < 33) return;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 7);
+                }
+            }
+        });
+    }
+
+    /** Llama a window.<fn>(json) en la interfaz desde cualquier hilo. */
+    private void runJsCallback(final String fn, final String json) {
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (webView != null) {
+                    webView.evaluateJavascript("window." + fn + " && window." + fn + "(" + json + ")", null);
+                }
+            }
+        });
+    }
+
+    /** Abre "Transmitir pantalla" / "Smart View" del sistema para duplicar todo el celular. */
+    private boolean openSystemScreenCast() {
+        String[] actions = new String[]{
+                "android.settings.CAST_SETTINGS",
+                "android.settings.WIFI_DISPLAY_SETTINGS"
+        };
+        for (String action : actions) {
+            try {
+                Intent intent = new Intent(action);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                return true;
+            } catch (Throwable ignored) {
+            }
+        }
+        return false;
     }
 
     private String performHttpRequest(String urlStr, String method, String body, String bearer, String referer) {
@@ -1121,6 +1284,13 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         mainHandler.removeCallbacksAndMessages(null);
+        if (castManager != null) {
+            castManager.release();
+            castManager = null;
+        }
+        if (offlineStore != null) {
+            offlineStore.removeListener(offlineListener);
+        }
         if (webView != null) {
             webView.stopLoading();
             webView.destroy();
